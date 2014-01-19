@@ -9,6 +9,11 @@
 - stackとcall frameの使い分け
 - コンパイラ(scheme),VM(scheme)の構成から，コンパイラ(scheme),VM(C)になるのが理想
 - そうなれば，Cだけで動くようになる
+- VM(C)の方は，継続の表現(まあ結局はコールスタックの構成になる)がちゃんとできてれば行けそうな気もする．
+  * Cスタックを上書きしたり，コピーしたりできるのかどうか
+- 正直jellyfishの方は何も見てない割にはよく動いてくれた
+- どうしようかなー
+- コンパイラ(Scheme)の方は，CPS変換と呼べるのかいなか．(明示的にそのワードは出てきてないとおもう)
 
 Three Implementation Model for Scheme Chapel Hill 1987
 
