@@ -304,3 +304,74 @@ Three Implementation Model for Scheme Chapel Hill 1987
 - (return)
   * スタックの最初のフレームを取り除き
   * 現在の環境，current rib,next expression,current stackをリセットする．
+
+## 3.4.2 Translation
+
+- コンパイラへの入力はschemeコードと，次に実行するコード
+- next instructionは継続の表現といえる?
+  * call/ccで作られる継続オブジェクトとは区別する
+- シンボル，quote式，定数式はそのまま
+  * (compile 'x '()) => (refer x ())
+  * (compile '(quote x) '()) => (constant x ())
+  * (compile '1 '()) => (constant 1 ())
+- lambda式は，本体がコンパイルされる．
+  * (compile '(lambda (x) x) '()) => (close (x) (refer x (return)) ())
+- ifとset!は部分式が必要
+- nextがthencとelsecのどちらにも現れる．
+  * ラベルやジャンプが必要ない
+  * (compile '(if x 1 2) '()) => (refer x (test (constant 1 ()) (constant 2 ())))
+  * (compile '(set! x 1) '()) => (constant 1 (assign x ()))
+
+```
+(rec var exp)
+
+=>
+
+(let ([var '()])
+  (set! var exp))
+
+(recur f ([var init ...) exp ...))
+
+=> 
+
+((rec f (lambda (var ...) exp ...))
+ init ...)
+```
+
+- 関数適用において，例えば(fcn arg1 arg2 ... argn)の命令列は，
+
+```
+frame
+  argn
+    argument
+    .
+    .
+    .
+      arg1
+        argument
+          fcn
+            apply
+```
+
+- 最初の引数が最後に評価される．consで先頭の要素の追加するため
+- (compile '(func 1 2) '(n)) =>  (frame (n) (constant 2 (argument (constant 1 (argument (refer func (apply)))))))
+- call/ccは現在の継続を返す仮想的な式を引数にとる関数の特殊な適用
+- (call/cc exp)は以下のように展開
+
+```
+frame
+  conti
+    argument
+      exp
+        apply
+```
+
+- フレームをプッシュし，現在の継続をcurrent ribに追加する
+- expを計算する．最後に，expを適用(評価)する．
+- 関数の適用(評価)と，call/ccは最後に現れるとほとんど同じ
+- 最後の関数適用とcall/ccは，コールフレームを追加しない，
+  * frame命令は省略する??
+
+### 3.4.3 Evaluation
+
+- 
