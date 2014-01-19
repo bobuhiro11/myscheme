@@ -1,12 +1,14 @@
 # why scheme is best?
 
-* データとプログラムがS式で統一されている．
-* マクロで構文を追加できる．ifだけの言語でもunlessを追加できる．
-* 継続がある，いわゆるCスタックとか違う構成の関数呼び出しがある．
+- データとプログラムがS式で統一されている．
+- マクロで構文を追加できる．ifだけの言語でもunlessを追加できる．
+- 継続がある，いわゆるCスタックとか違う構成の関数呼び出しがある．
+  * goto,continue,returnをまとめてできる
+  * 大域脱出，コルーチン，疑似マルチタスク，バックトラックもできる
+- ribの意味がわからん
+- stackとcall frameの使い分け
 
-Three Implementation Model for Scheme
-
-Chapel Hill 1987
+Three Implementation Model for Scheme Chapel Hill 1987
 
 # Abstract
 
@@ -116,14 +118,14 @@ Chapel Hill 1987
 
 ## 3.2 Representation of Data Structure
 
-- core言語では5つのデータ構造がある
+- core言語では5つのデータ構造がある(メモリ内に存在しなければならないデータのこと??)
   * 環境 environments
   * コールフレーム call frames
   * コントロールスタック control stack
   * クロージャ closures
   * 継続 continuations
 
-## 3.2.1 Environments
+### 3.2.1 Environments
 
 - 環境は胸部に似ている
 
@@ -145,6 +147,160 @@ Chapel Hill 1987
  ((a b) . (0 1)))
 ```
 
-- 3.4節ではvariable ribsからvalue ribsに改良される
+- 3.4節ではvariable ribsが環境から除かれら，環境はvalue ribsのリストに改良される
 
-##
+### 3.2.2 Frames and the Control Stack
+
+- フレームは，未決定な計算を保持するため
+- 普通関数呼び出し時に作られる
+  * だけど，そのようなフレームはここでは使わない
+- コールフレームには，戻りアドレス(または次に評価するS式)，環境(またはアクティブな変数の束縛に関する情報)，次のフレームへのポインタ，その他，が含まれる
+- ヒープベースでは，単純に4つのフィールドを含むリスト
+- 1つめはS式．
+  * 次に評価されるべきS式．
+  * それは，戻りアドレス(program counter,instruction counterを含む)を決定する
+- 2つめは環境
+  * 現在のアクティブな環境
+- 3つめはrib field
+  * During the evaluation of an application, this field contains a list of the arguments that have been evaluated so far.
+- 4つめは次のフレームへの参照
+- コントロールスタックは，現在のフレーム，前のフレーム，その前・・・のリスト構造
+  * "next frame"を通して連結リストをつくる
+
+### 3.2.3 Closures and Continuations
+
+- closureは関数の実行部(またはテキスト)と，現在の環境を組み合わせたもの
+- 3.5節の改良前では，変数(variables)は必要
+- 3.4節では，closureは，本体，環境，変数リスト
+
+```
+((lambda (x)
+  (lambda (y) (cons x y)))
+  'a)
+上の式が返すclosureは以下のようになる
+((cons x y) ((x) . (a)) (y))
+```
+
+- except that the actual body would be a compiled version of (cons x y).
+- 継続は，与えられた点からの続きの計算をするのに十分な情報をもつclosureである
+- 本質的には，call/ccがそれを作った時点へ帰ることを意味する
+- これを実現するのは，全てのスタックが何らかの方法で保存されている必要がある
+- 継続は単純に，現在のフレームへのポインタ(つまり全体のコントロールスタック)を含む特殊なclosure
+- closureに継続であるかどうかを示すタグをつけるのは可能
+  * だけどこのチェックは効率が悪い
+  * 普通のclosureに比べ，継続はそんなに現れない
+  * Instead, continuation closures have the same structure as normal closures, but with a body that, when executed, restores the saved stack and returns the continuation’s argument to the routine that created the continuation.
+
+## 3.3 Implementation Strategy
+
+- 前節までを使って実装
+- 多くの方針がある
+  * ここでは理解が簡単で，一般化し易い方針を目指す
+- 計算の状態の保持にレジスタ群を使い，繰り返し計算をすすめる
+- An iterative approach is necessary because the more straightforward recursive approach of the meta-circular interpreter presented in Chapter 2 cannot properly support continuations or tail calls.
+- 評価器は，継続において状態を保存するために明示的に計算の状態にアクセスできる必要がある
+- 処理系が再帰を適切に実現しないと，末尾呼び出しを適切にサポートできない
+- 5つのレジスタを使う
+  * a: the accumulator
+    + 値を返す命令の返り値
+    + load命令や変数の参照など
+    + 関数適用のときは，引数を次々に保持し，value ribに保存していく
+    + 関数の返り値にも使う
+    + if文では，条件式に使う
+    + 計算後はトップレベルの計算結果を示す
+  * x: the next expression
+    + 次に評価される式
+    + 定数ロードや，クロージャの生成，クロージャの割り当て，クロージャの適用など
+    + ほとんどschemeコードと似ているが，効率的になるようコンパイルされる??
+  * e: the current environments
+    + アクティブな静的割り当てを保持する
+    + クロージャ適用のときは，クロージャ生成時の環境の上に新しい環境が作られる
+    + 変数参照，変数割り当て，lambda式(例えば生成時)に，現在の環境をつかう
+    + 環境は関数適用により削除されるから，コールフレーム内に入れておく必要がある
+  * r: the current value rib
+    + 引数のリストを保持する．
+    + accumulatorからcurrent ribにcosしていく
+    + 全ての引数とクロージャの値が計算されれば，クロージャの環境と組み合わせて新しい環境を作る
+  * s: the current stack
+    + コールフレームのtopを表す
+    + call/cc式の評価により継続オブジェクトに保存される
+- 変数参照では環境から値を引っ張ってきてaccumulatorに渡す
+- また，next expression xも同時に変わる
+  * その他の命令でも特別な場合以外にはxを変化させる
+- 定数とquote式は同じとみなす
+  * どちらもオブジェクトをaccumulatorにいれる
+- lambda式により作られたクロージャもaccumulatorにいれる
+- if式では最初に条件式をaccumulatorに入れておき，それをもとに次の式を決定する
+- set!は破壊的に現在の環境を変更する
+- call/cc式は，あたらしいコールフレームを作る．
+  * 現在の環境，current rib，戻りexpressoinを浮腫む
+- その新しいスタックは継続オブジェクトである
+- それには現在のribが追加される(空のはずである)
+- The next expression is updated to an expression that first evaluates the function expression and then applies the resulting closure to the current rib.
+- When this continuation is subsequently invoked, the saved stack is restored, the top frame is removed, and the argument to the continuation is placed in the accumulator.
+- 関数適用にはいくつかのステップがある
+  * はじめに，現在の環境，現在のrib，返り先の式を保存するための新しいスタックを作る
+    + そのステップでcurrent ribは空リストに初期化される
+  * 次に，全ての引数がそれぞれ評価されcurrent ribに追加される
+  * 関数の式(expresson)が評価されその値がaccumulatorに残る
+  * 最後にcurrent ribに対し，accumulator内のクロージャを適用する
+  * 適用時に，クロージャの環境とcurrent ribにより作られる新しい環境はcurrent environmentレジスタに
+  * クロージャ本体は，current expressionレジスタに入る．
+- クロージャから帰るときは，スタックフレームの先頭を削除し，復元する．
+  * closureの返り値は，accumulatorに残っている
+- call/ccや再帰呼び出しの評価は特別である
+  * 末尾呼び出しを最適化するには(コントロールスタックを作らないためには)，新しくコールフレームを追加してはならない．
+  * コールフレームを追加する目的は，環境，valu rib,返り値先の式を保持すること
+  * 末尾呼び出しでは，呼び出し後のコードはreturnだけなので，値をすぐに返せば良い．
+
+## 3.4 Implementing the Heap-Based Model
+
+- 本章と4章で，SchemeをVMのアセンブリコードへ変換する
+- このアセンブリは，普通アセンブリコードに期待するもの(ラベル，ジャンプ）がない
+  * ラベルやジャンプのない，非循環なグラフ
+- この形式から伝統的なアセンブリへの変換は簡単
+- VMバイトコードは簡単にする
+
+## 3.4.1 Assembly Code
+
+- 12命令
+- (halt)
+  * VMをhaltする．
+  * accumulatorの値を結果とする
+- (refer var x)
+  * 変数varの値を現在の環境から取得し，accumulatorに突っ込む
+  * 次の式をxにセットする．
+- (constant obj x)
+  * 定数objをaccumulatorにツッコミ，xをセット
+- (close vars body x)
+  * bodyとvarsと現在の環境からクロージャを作り，accumulatorに突っ込む
+  * 次の式をxにセットする．
+- (test then else)
+  * accumulatorがnullかどうかチェックし，nextかelseをnext expressionにセットする．
+- (assign var x)
+  * varにaccumulatorを束縛し，現在の環境を変更する．
+  * 次の式をxにセットする．
+- (conti x)
+  * 現在のスタックから継続を作り，accumulatorに突っ込む
+  * 次の式をxにセットする．
+- (nuate s var)
+  * sを現在のスタックに復元する．
+  * 現在の環境のvarにaccumulatorをセットする．
+  * 次の式を(return)にする．
+  * 継続の適用かな
+- (frame x ret)
+  * 現在の環境とcurrent ribとret(次の式として)から新しいフレームを作る
+  * 現在のスタックにこれを追加
+  * current ribを空リストに，次の式をxにする．??????
+- (argument x)
+  * accumulatorの値をcurrent ribに追加
+  * 次の式をxにセットする．
+- (apply)
+  * accumulator内のclosureをcurrent ribsに適用する
+  * 正確には，クロージャの環境とクロージャの変数リストとcurrent ribを展開する
+  * 現在の環境を新しくする
+  * current ribを空リストにする．
+  * 次の式をclosure本体にする．
+- (return)
+  * スタックの最初のフレームを取り除き
+  * 現在の環境，current rib,next expression,current stackをリセットする．

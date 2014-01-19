@@ -3,3 +3,4 @@
   * clojureでは第一級継続はサポートしていないみたい
   * CPSはおｋ
   * [Continuations-in-clojure](http://stackoverflow.com/questions/1173133/continuations-in-clojure)
+- ちなみにrubyにはcall/ccがあるんだ．．．
