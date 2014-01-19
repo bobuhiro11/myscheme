@@ -7,6 +7,8 @@
   * 大域脱出，コルーチン，疑似マルチタスク，バックトラックもできる
 - ribの意味がわからん
 - stackとcall frameの使い分け
+- コンパイラ(scheme),VM(scheme)の構成から，コンパイラ(scheme),VM(C)になるのが理想
+- そうなれば，Cだけで動くようになる
 
 Three Implementation Model for Scheme Chapel Hill 1987
 
