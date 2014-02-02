@@ -33,11 +33,18 @@
                 ((_ exp1 (key vars exp2 ...) c ...)
                  (if (eq? (car exp1) 'key)
                    (record vars (cdr exp1) exp2 ...)
-                   (record-case exp0 c ...)))))
+                   (record-case exp1 c ...)))))
 
+; (tail? '(return)) => #t
 (define tail?
   (lambda (next)
     (eq? (car next) 'return)))
+
+; (display '(if 0 10 20)) => (constant 0 (test (constant 10 ()) (constant 20 ())))
+(define display-compile
+  (lambda (code)
+    (display (compile code '(n)))
+    (newline)))
 
 (define compile
   (lambda (x next)
@@ -62,16 +69,18 @@
                                  c
                                  (list 'frame next c))))
                     (else
-                      (recur loop ((args (cdr x))
-                                   (c (compile (car x) '(apply))))
+                      (recur loop ((args (cdr x)) (c (compile (car x) '(apply))))
                              (if (null? args)
                                (if (tail? next)
                                  c
                                  (list 'frame next c))
                                (loop (cdr args)
                                      (compile (car args)
-                                              (list 'argument c)))))))))))
+                                              (list 'argument c))))))))
+      (else
+        (list 'constant x next)))))
 
-
-(define code '(quote 100))
-(display (compile code '()))
+(display-compile '(if x 10 20))
+(display-compile '(set! x 1))
+(display-compile '(lambda (x y z) x))
+(display-compile '(func 1 2))
