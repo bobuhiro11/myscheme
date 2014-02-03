@@ -142,4 +142,16 @@
   (lambda (x)
     (VM '() (compile x '(halt)) '() '() '())))
 
+(display (compile '(if '() 3 2) '(halt)))
+(newline)
 (display (evaluate '(if '() 3 2)))
+(newline)
+(define data
+  '( (lambda (x y)
+       ( (lambda (x y z) x ) x y 300)
+       ) 100 200)
+  )
+(display (evaluate '((lambda (x y) y) 100 200)))
+(newline)
+(display (evaluate data))
+(newline)
