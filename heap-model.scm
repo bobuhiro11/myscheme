@@ -103,26 +103,26 @@
                       (nxtelt (cdr r) (- elt 1))))
              (nxtrib (cdr e) (- rib 1))))))
 
-;; (closure '(cons x y) '((x).(1)))
-;;    => ((cons x y) ((x) 1))
+;; (closure '(cons x y) '(1 2 3))
+;;    => ((cons x y) (1 2 3))
 (define closure
   (lambda (body e)
     (list body e)))
 
-;; (continuation '((return) ((a) (1)) () ()))
+;; (continuation '((return) (1 2 3) () ()))
 ;;  =>
-;; ((nuate ((return) ((a) (1)) () ()) v) () (v))
+;; ((nuate ((return) (1 2 3) () ()) (0 . 0)) ())
 (define continuation
   (lambda (s)
     (closure (list 'nuate s '(0 . 0))
              '())))
 
 ;; (call-frame '(return)
-;;             '((a). (1))
+;;             '(1 2 3)
 ;;             '()
 ;;             '())
 ;;
-;; => ((return) ((a). (1)) () ())
+;; => ((return) (1 2 3) () ())
 (define call-frame
   (lambda (x e r s)
     (list x e r s)))
@@ -175,7 +175,6 @@
 (define evaluate
   (lambda (x)
     (VM '() (compile x '() '(halt)) '() '() '())))
-
 (define debug
   (lambda (code)
     (display "compiled:   ")
@@ -205,11 +204,14 @@
    (newline)
    (newline)))
 
-(debug '((lambda (x y z) (if x y z))
-                     #f 2 3))
+;(debug '((lambda (x y z) (if x y z))
+;                     #f 2 3))
 ;(debug '(if 0 10 20))
 ;(debug '(lambda (x y z) x))
 ;(debug '((lambda (x y z)
 ;           ((lambda (p) y)
 ;            (set! y 10)))
 ;         1 2 3))
+
+;(debug '(call/cc (lambda (cc) (cc 1111))))
+(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
