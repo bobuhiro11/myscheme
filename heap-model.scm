@@ -39,36 +39,50 @@
   (lambda (next)
     (eq? (car next) 'return)))
 
+;; (extend
+;;   '((a b c) (u v))
+;;   '(x y z))
+;;
+;; => ((x y z) (a b c) (u v))
+(define extend
+  (lambda (env rib)
+    (cons rib env)))
+
 (define compile
-  (lambda (x next)
+  (lambda (x e next)
     (cond
       ((symbol? x)
-       (list 'refer x next))
+       (list 'refer (compile-lookup x e) next))
       ((pair? x)
        (record-case x
                     (quote   (obj)
                              (list 'constant obj next))
                     (lambda  (vars body)
-                      (list 'close vars (compile body '(return)) next))
+                      (list 'close
+                            (compile body (extend e vars) '(return))
+                            next))
                     (if      (test then else)
                       (let ((thenc (compile then next))
                             (elsec (compile else next)))
-                        (compile test (list 'test thenc elsec))))
+                        (compile test e (list 'test thenc elsec))))
                     (set!    (var x)
-                      (compile x (list 'assign var next)))
+                      (let ((access (compile-lookup var e)))
+                        (compile x e (list 'assign access next))))
                     (call/cc (x)
-                             (let ((c (list 'conti (list 'argument (compile x '(apply))))))
+                             (let ((c (list 'conti (list 'argument (compile x e '(apply))))))
                                (if (tail? next)
                                  c
                                  (list 'frame next c))))
                     (else
-                      (recur loop ((args (cdr x)) (c (compile (car x) '(apply))))
+                      (recur loop ((args (cdr x))
+                                   (c (compile (car x) e '(apply))))
                              (if (null? args)
                                (if (tail? next)
                                  c
                                  (list 'frame next c))
                                (loop (cdr args)
                                      (compile (car args)
+                                              e
                                               (list 'argument c))))))))
       (else
         (list 'constant x next)))))
@@ -113,63 +127,75 @@
   (lambda (x e r s)
     (list x e r s)))
 
-;; (extend '((a). (1)) '(x y z) '(1 2 3))
-;; =>
-;; (((x y z) 1 2 3) (a) 1)
-(define extend
-  (lambda (e vars vals)
-    (cons (cons vars vals) e)))
-
-(define VM
-  (lambda (a x e r s)
-    (record-case x
-                 (halt () a)
-                 (refer (var x)
-                        (VM (car (lookup var e)) x e r s))
-                 (constant (obj x)
-                           (VM obj x e r s))
-                 (close (vars body x)
-                        (VM (closure body e vars) x e r s))
-                 (test (then else)
-                       (VM a (if a then else) e r s))
-                 (assign (var x)
-                         (set-car! (lookup var e) a)
-                         (VM a x e r s))
-                 (conti (x)
-                        (VM (continuation s) x e r s))
-                 (nuate (s var)
-                        (VM (car (lookup var e)) '(return) e r s))
-                 (frame (ret x)
-                        (VM a x e '() (call-frame ret e r s)))
-                 (argument (x)
-                           (VM a x e (cons a r) s))
-                 (apply ()
-                        (record (body e vars) a
-                                (VM a body (extend e vars r) '() s)))
-                 (return ()
-                         (record (x e r s) s
-                                 (VM a x e r s))))))
-(define evaluate
-  (lambda (x)
-    (VM '() (compile x '(halt)) '() '() '())))
+;;(compile-lookup
+;;  'c
+;;  '((x y z) (a b c) (u v))
+;;  )
+;; => (1. 2)
+(define compile-lookup
+  (lambda (var e)
+    (recur nxtrib ((e e) (rib 0))
+           (recur nxtelt ((vars (car e)) (elt 0))
+                  (cond
+                    ((null? vars) (nxtrib (cdr e) (+ rib 1)))  ; next rib
+                    ((eq? (car vars) var) (cons rib elt))      ; discover
+                    (else (nxtelt (cdr vars) (+ elt 1))))))))  ; next elt
 
 
-(define debug
-  (lambda (code)
-    (display "compiled  :")
-    (display (compile code '(halt)))
-    (newline)
-    (display "evaluated :")
-    (display (evaluate code))
-    (newline)
-    (newline)))
+;(define VM
+;  (lambda (a x e r s)
+;    (record-case x
+;                 (halt () a)
+;                 (refer (var x)
+;                        (VM (car (lookup var e)) x e r s))
+;                 (constant (obj x)
+;                           (VM obj x e r s))
+;                 (close (vars body x)
+;                        (VM (closure body e vars) x e r s))
+;                 (test (then else)
+;                       (VM a (if a then else) e r s))
+;                 (assign (var x)
+;                         (set-car! (lookup var e) a)
+;                         (VM a x e r s))
+;                 (conti (x)
+;                        (VM (continuation s) x e r s))
+;                 (nuate (s var)
+;                        (VM (car (lookup var e)) '(return) e r s))
+;                 (frame (ret x)
+;                        (VM a x e '() (call-frame ret e r s)))
+;                 (argument (x)
+;                           (VM a x e (cons a r) s))
+;                 (apply ()
+;                        (record (body e vars) a
+;                                (VM a body (extend e vars r) '() s)))
+;                 (return ()
+;                         (record (x e r s) s
+;                                 (VM a x e r s))))))
+; (define evaluate
+;   (lambda (x)
+;     (VM '() (compile x '(halt)) '() '() '())))
 
-(debug '(if 0 10 20))
-(debug '(lambda (x y z) x))
-(debug '((lambda (x y z) z)
-                     1 2 3))
-(debug '((lambda (x y z)
-                       ((lambda (p) y
-                          ) (set! y 10))
-                      )
-                     1 2 3))
+
+;(debug '(if 0 10 20))
+;(debug '(lambda (x y z) x))
+;(debug '((lambda (x y z) z)
+;                     1 2 3))
+;(debug '((lambda (x y z)
+;                       ((lambda (p) y
+;                          ) (set! y 10))
+;                      )
+;                     1 2 3))
+(display (compile
+           '((lambda (x y) x) 10 20) '() '(halt)))
+(newline)
+(display (compile
+'(lambda (x y)
+   ((lambda (a b c)
+      (a (lambda (x b) (y x c b))
+         b
+         y))
+    x
+    x
+    y))
+'()
+'(halt)))
