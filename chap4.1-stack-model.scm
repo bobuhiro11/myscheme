@@ -1,4 +1,4 @@
-;;; Stack Base Scheme Interpreter
+;;; Chap 4.1 Stack Base Scheme Interpreter
 
 ;; (rec sum (lambda (x) (if (= x 0) 0 (+ x (sum (- x 1))))))
 (define-syntax rec (syntax-rules ()
