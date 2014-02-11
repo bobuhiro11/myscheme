@@ -138,7 +138,8 @@
 
 (define VM
   (lambda (a x e s)
-    (display-stack)
+    ;(display-stack)
+    (display x) (newline) (newline)
     (record-case x
                  (halt ()
                        a)
@@ -170,7 +171,7 @@
 
 (define evaluate
   (lambda (x)
-    (VM '() (compile x '() '(halt)) 0 0)))
+    (VM '() (compile x 0 '(halt)) 0 0)))
 
 ;(display (evaluate
 ;           '(if #t 1 2)
@@ -187,6 +188,13 @@
 ;           ))
 ;(newline)
 
+(display (compile
+           '((lambda (x y) (x y))
+              (lambda (x) (if x 10 20))
+              #f)
+           '()
+           '(halt)
+           ))
 (display (evaluate
            '((lambda (x y) (x y))
               (lambda (x) (if x 10 20))
