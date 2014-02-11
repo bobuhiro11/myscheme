@@ -125,8 +125,20 @@
   (lambda (body e)
     (list body e)))
 
+(define display-stack
+  (lambda ()
+    (display "---bottom---\n")
+    (map (lambda (x) (if (undefined? x)
+                       '()
+                       (begin
+                         (display x)
+                         (newline))))
+         (vector->list *stack*))
+    (display "--- top ----\n")))
+
 (define VM
   (lambda (a x e s)
+    (display-stack)
     (record-case x
                  (halt ()
                        a)
@@ -152,28 +164,28 @@
                          (let ((s (- s n)))
                            (VM a (index s 0) (index s 1) (- s 2)))))))
 
-(display (compile '((lambda (x y) x) 1 2)
-                  '((x y z) (a b c) (u v))
-                  '(halt)))
+;(display (compile '((lambda (x y) x) 1 2)
+;                  '((x y z) (a b c) (u v))
+;                  '(halt)))
 
 (define evaluate
   (lambda (x)
     (VM '() (compile x '() '(halt)) 0 0)))
 
-(display (evaluate
-           '(if #t 1 2)
-           ))
-(newline)
-
-(display (evaluate
-           '(quote (1 2 3))
-           ))
-(newline)
-
-(display (evaluate
-           '((lambda (x y) y) 19 29)
-           ))
-(newline)
+;(display (evaluate
+;           '(if #t 1 2)
+;           ))
+;(newline)
+;
+;(display (evaluate
+;           '(quote (1 2 3))
+;           ))
+;(newline)
+;
+;(display (evaluate
+;           '((lambda (x y) y) 19 29)
+;           ))
+;(newline)
 
 (display (evaluate
            '((lambda (x y) (x y))
