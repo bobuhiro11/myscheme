@@ -309,10 +309,16 @@
            '((lambda (x y) y) 1 2)
            ))
 
-(display (compile 
-           '(call/cc (lambda (k) (k 10))) 
+(display (compile
+           '(call/cc (lambda (k) (k 10)))
            '(() . ())
            '(halt)
            ))
 
 (display (evaluate '(call/cc (lambda (k)  (if (k #f) 10 20)))))
+(display (evaluate '(quote hello)))
+(display (evaluate '((lambda (x) x) 3)))
+(display (evaluate '(if #t 5 0)))
+(display (evaluate '(((call/cc (lambda (c) c)) (lambda (x) x)) 11)))
+(display (evaluate '((lambda (f x) (f x)) (lambda (x) x) 13)))
+(display (evaluate 17))
