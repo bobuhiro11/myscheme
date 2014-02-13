@@ -344,7 +344,12 @@
          (vector->list *stack*))
     (display "--- top ----\n")))
 
-
+(define (box x)
+    (list x))
+(define (unbox x)
+    (car x))
+(define (set-box! b x)
+    (set-car! b x))
 
 (define (VM a x f c s)
   (record-case x
@@ -365,7 +370,7 @@
                [test (then else)
                      (VM a (if a then else) f c s)]
                [assign-local (n x)
-                             (set-box! (index-closure c n) a)
+                             (set-box! (index f n) a)
                              (VM a x f c s)]
                [assign-free (n x)
                             (set-box! (index-closure c n) a)
@@ -388,11 +393,23 @@
   (lambda (x)
     (VM '() (compile x '() '() '(halt)) 0 '() 0)))
 
-(display (evaluate '((lambda (x y) y) 1 2)))
-(display (evaluate '(call/cc (lambda (k)  (if (k #f) 10 20)))))
-(display (evaluate '(quote hello)))
-(display (evaluate '((lambda (x) x) 3)))
-(display (evaluate '(if #t 5 0)))
-(display (evaluate '(((call/cc (lambda (c) c)) (lambda (x) x)) 11)))
-(display (evaluate '((lambda (f x) (f x)) (lambda (x) x) 13)))
-(display (evaluate 17))
+(define debug
+  (lambda (code)
+    (let ((opecode (compile code '() '() '(halt))))
+      (display opecode)
+      (newline)
+      (display (VM '() opecode 0 '() 0))
+      (newline))))
+
+(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
+(debug '((lambda (x y) y) 1 2))
+(debug '(quote hello))
+(debug '((lambda (x) x) 3))
+(debug '(if #t 5 0))
+(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
+(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
+(debug 17)
+(debug '((lambda (x)
+           ((lambda (y) x)
+            (set! x 19)))
+         29))
