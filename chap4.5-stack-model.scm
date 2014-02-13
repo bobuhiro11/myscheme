@@ -333,8 +333,13 @@
                (copy (+ i 1))))
       s)))
 
-(define display-stack
-  (lambda ()
+(define (display-register a x f c s)
+    (newline)
+    (display "a=") (display a) (newline)
+    (display "x=") (display x) (newline)
+    (display "f=") (display f) (newline)
+    (display "c=") (display c) (newline)
+    (display "s=") (display s) (newline)
     (display "---bottom---\n")
     (map (lambda (x) (if (undefined? x)
                        '()
@@ -342,7 +347,8 @@
                          (display x)
                          (newline))))
          (vector->list *stack*))
-    (display "--- top ----\n")))
+    (display "--- top ----\n")
+    (newline))
 
 (define (box x)
     (list x))
@@ -352,6 +358,7 @@
     (set-car! b x))
 
 (define (VM a x f c s)
+  (display-register a x f c s)
   (record-case x
                [halt () a]
                [refer-local (n x)
@@ -401,14 +408,14 @@
       (display (VM '() opecode 0 '() 0))
       (newline))))
 
-(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
-(debug '((lambda (x y) y) 1 2))
-(debug '(quote hello))
-(debug '((lambda (x) x) 3))
-(debug '(if #t 5 0))
-(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
-(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
-(debug 17)
+;(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
+;(debug '((lambda (x y) y) 1 2))
+;(debug '(quote hello))
+;(debug '((lambda (x) x) 3))
+;(debug '(if #t 5 0))
+;(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
+;(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
+;(debug 17)
 (debug '((lambda (x)
            ((lambda (y) x)
             (set! x 19)))
