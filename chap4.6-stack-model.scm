@@ -1,4 +1,4 @@
-;;; Chap 4.5 Stack Base Scheme Interpreter
+;;; Chap 4.6 Stack Base Scheme Interpreter
 
 ;; (rec sum (lambda (x) (if (= x 0) 0 (+ x (sum (- x 1))))))
 (define-syntax rec (syntax-rules ()
@@ -212,6 +212,9 @@
                (list 'box n (f (cdr vars) (+ n 1)))
                (f (cdr vars) (+ n 1)))))))
 
+(define (tail? x)
+  (eq? 'return (car x)))
+
 (define (compile x e s next)
   (cond [(symbol? x)
          (compile-refer x e
@@ -246,21 +249,37 @@
                                         (lambda (n)
                                           (compile x e s (list 'assign-free n next))))]
                       [call/cc (x)
-                               (list 'frame
-                                     next
-                                     (list 'conti
-                                           (list 'argument
-                                                 (compile x e s '(apply)))))]
+                               (let ((c (list 'conti
+                                              (list 'argument
+                                                    (compile x e s
+                                                             (if (tail? next)
+                                                               (list 'shift
+                                                                     1
+                                                                     (cadr next)
+                                                                     '(apply))
+                                                               '(apply)))))))
+                                     (if (tail? next)
+                                       c
+                                       (list 'frame next c)))]
                       [else
-                        (let loop ([args (cdr x)]
-                                   [c (compile (car x) e s '(apply))])
+
+                        (let loop (;[func (car x)]
+                                   [args (cdr x)]
+                                   [c (compile (car x) e s
+                                               (if (tail? next)
+                                                 (list 'shift (length (cdr x)) (cadr next) '(apply))
+                                                 '(apply)))])
+                          ; (list 'shift (length args) (cadr next) (list 'apply (length args)))
+                          ; (list 'apply (length args))))])
                           (if (null? args)
-                            (list 'frame next c)
-                            (loop (cdr args)
-                                  (compile (car args)
-                                           e
-                                           s
-                                           (list 'argument c)))))])]
+                            (if (tail? next)
+                              c
+                              (list 'frame next c))
+                              ; (list 'frame c next))
+                            (loop ;(car args)
+                              (cdr args)
+                              (compile (car args) e s (list 'argument c)))))])]
+
         [else (list 'constant x next)]))
 
 (define (find-free x b)
@@ -357,8 +376,16 @@
 (define (set-box! b x)
     (set-cdr! b x))
 
+(define (shift-args n m s)
+  (let next-arg ((i (- n 1)))
+  (unless (< i 0)
+  (index-set! s (+ i m) (index s i))
+  (next-arg (- i 1))))
+    (- s m))
+
+
 (define (VM a x f c s)
-  (display-register a x f c s)
+;  (display-register a x f c s)
   (record-case x
                [halt () a]
                [refer-local (n x)
@@ -390,6 +417,8 @@
                       (VM a x f c (push ret (push f (push c s))))]
                [argument (x)
                          (VM a x f c (push a s))]
+               [shift (n m x)
+                      (VM a x f c (shift-args n m s))]
                [apply ()
                       (VM a (closure-body a) s a s)]
                [return (n)
@@ -408,14 +437,14 @@
       (display (VM '() opecode 0 '() 0))
       (newline))))
 
-;(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
-;(debug '((lambda (x y) y) 1 2))
-;(debug '(quote hello))
-;(debug '((lambda (x) x) 3))
-;(debug '(if #t 5 0))
-;(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
-;(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
-;(debug 17)
+(debug '((lambda (x y) y) 1 2))
+(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
+(debug '(quote hello))
+(debug '((lambda (x) x) 3))
+(debug '(if #t 5 0))
+(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
+(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
+(debug 17)
 (debug '((lambda (x)
            ((lambda (y) x)
             (set! x 19)))
