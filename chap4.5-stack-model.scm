@@ -43,39 +43,16 @@
   (lambda (env rib)
     (cons rib env)))
 
-(define closure
-  (lambda (body n s)
-    (let ((v (make-vector (+ n 1))))
-      (vector-set! v 0 body)
-      (recur f ((i 0))
-             (unless (= i n)
-               (vector-set! v (+ i 1) (index s i))
-               (f (+ i 1))))
-      v)))
 
-(define closure-body
-  (lambda (c)
-    (vector-ref c 0)))
-
-(define index-closure
-  (lambda (c n)
-    (vector-ref c (+ n 1))))
-
-(define continuation
-  (lambda (s)
-    (closure
-      (list 'refer-local
-            0
-            (list 'nuate  (save-stack s) (list 'return 0)))
-      0
-      '())))
-
+;; (set-member? 'a '(a b c))  => #f
+;; (set-member? 'd '(a b c))  => #t
 (define set-member?
   (lambda (x s)
     (cond
       ((null? s) #f)
       ((eq? x (car s)) #t)
       (else (set-member? x (cdr s))))))
+
 
 (define set-cons
   (lambda (x s)
@@ -90,13 +67,15 @@
       (set-union (cdr s1)
                  (set-cons (car s1) s2)))))
 
+
 (define set-minus
   (lambda (s1 s2)
     (if (null? s1)
       '()
       (if (set-member? (car s1) s2)
-        (cons (car s1) (set-intersect (cdr s1) s2))
-        (set-intersect (cdr s1) s2)))))
+        (set-minus (cdr s1) s2)
+        (cons (car s1) (set-minus (cdr s1) s2))))))
+
 
 (define set-intersect
   (lambda (s1 s2)
@@ -106,12 +85,12 @@
         (cons (car s1) (set-intersect (cdr s1) s2))
         (set-intersect (cdr s1) s2)))))
 
+
 ;; (find-free
-;;   '((lambda (x y) z) 10 20)
-;;   '()
-;;   )
+;;   '((lambda (x y) (if p q r)) 10 20)  <- 対象のs式
+;;   '(p))       <- 束縛変数リストの初期値
 ;;
-;;   => (z)
+;; => (r q)
 (define find-free
   (lambda (x b)
     (cond
@@ -139,6 +118,11 @@
       (else
         '()))))
 
+;; (find-sets
+;;   '(lambda (p) (set! x y))
+;;   '(x y z))                 <- 調べたい変数
+;;
+;;   => (x)
 (define find-sets
   (lambda (x v)
     (cond
@@ -171,6 +155,7 @@
          '()))))
 
 
+
 (define collect-free
   (lambda (vars e next)
     (if (null? vars)
@@ -186,11 +171,13 @@
                     (lambda (n) (list 'refer-free  n next)))))
 
 ;; (compile-lookup
-;;   'z
-;;   '((x y) .  (z w))
-;;   (lambda (x) x)
-;;   (lambda (x) x)
+;;   'y
+;;   '((x y) .  (z w))                <- (束縛変数(ローカル変数)のリスト . 自由変数のリスト)
+;;   (lambda (x) (list 'local x))     <- 束縛変数の処理
+;;   (lambda (x) (list 'free  x))     <- 自由変数の処理
 ;;   )
+;;
+;;   => (local 1)   <- それぞれのリストで何番目か
 (define compile-lookup
   (lambda (x e return-local return-free)
     (recur nxtlocal ((locals (car e)) (n 0))
@@ -333,6 +320,45 @@
                (copy (+ i 1))))
       s)))
 
+
+;(push 10 0)
+;(push 20 1)
+;(push 30 2)
+;(push 40 3)
+;
+;(closure
+;  '(halt)
+;  2        <- num of free variable
+;  4)       <- stack pointer
+;
+;  => #( (halt) 40 30 )
+(define closure
+  (lambda (body n s)
+    (let ((v (make-vector (+ n 1))))
+      (vector-set! v 0 body)
+      (recur f ((i 0))
+             (unless (= i n)
+               (vector-set! v (+ i 1) (index s i))
+               (f (+ i 1))))
+      v)))
+
+(define closure-body
+  (lambda (c)
+    (vector-ref c 0)))
+
+(define index-closure
+  (lambda (c n)
+    (vector-ref c (+ n 1))))
+
+(define continuation
+  (lambda (s)
+    (closure
+      (list 'refer-local
+            0
+            (list 'nuate  (save-stack s) (list 'return 0)))
+      0
+      '())))
+
 (define (display-register a x f c s)
     (newline)
     (display "a=") (display a) (newline)
@@ -416,7 +442,7 @@
 ;(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
 ;(debug '((lambda (f x) (f x)) (lambda (x) x) 13))
 ;(debug 17)
-(debug '((lambda (x)
-           ((lambda (y) x)
-            (set! x 19)))
-         29))
+;(debug '((lambda (x)
+;           ((lambda (y) x)
+;            (set! x 19)))
+;         29))
