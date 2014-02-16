@@ -29,14 +29,14 @@
 ;;                     (- x y z)))
 (define-syntax record-case
   (syntax-rules (else)
-                ((_ exp1 (else exp3 ...))
-                 (begin exp3 ...))
-                ((_ exp1 (key vars exp2 ...))
-                 (if (eq? (car exp1) 'key) (record vars (cdr exp1) exp2 ...)))
-                ((_ exp1 (key vars exp2 ...) c ...)
+                [(_ exp1 (else exp3 ...))
+                 (begin exp3 ...)]
+                [(_ exp1 (key vars exp2 ...))
+                 (if (eq? (car exp1) 'key) (record vars (cdr exp1) exp2 ...))]
+                [(_ exp1 (key vars exp2 ...) c ...)
                  (if (eq? (car exp1) 'key)
                    (record vars (cdr exp1) exp2 ...)
-                   (record-case exp1 c ...)))))
+                   (record-case exp1 c ...))]))
 
 ;; (extend
 ;;   '((a b c) (u v))
@@ -79,9 +79,9 @@
 (define set-member?
   (lambda (x s)
     (cond
-      ((null? s) #f)
-      ((eq? x (car s)) #t)
-      (else (set-member? x (cdr s))))))
+      [(null? s) #f]
+      [(eq? x (car s)) #t]
+      [else (set-member? x (cdr s))])))
 
 (define set-cons
   (lambda (x s)
@@ -165,33 +165,33 @@
 (define find-sets
   (lambda (x v)
     (cond
-      ((symbol? x)
-       '())
-      ((pair? x)
+      [(symbol? x)
+       '()]
+      [(pair? x)
        (record-case x
-                    (quote (obj)
-                           '())
-                    (lambda (vars body)
-                      (find-sets body (set-minus v vars)))
-                    (if (test then else)
+                    [quote (obj)
+                           '()]
+                    [lambda (vars body)
+                      (find-sets body (set-minus v vars))]
+                    [if (test then else)
                       (set-union (find-sets test v)
                                  (set-union (find-sets then v)
-                                            (find-sets else v))))
-                    (set! (var x)
+                                            (find-sets else v)))]
+                    [set! (var x)
                       (set-union (if (set-member? var v)
                                    (list var)
                                    '())
-                                 (find-sets x v)))
-                    (call/cc (exp)
-                             (find-sets exp v))
-                    (else
+                                 (find-sets x v))]
+                    [call/cc (exp)
+                             (find-sets exp v)]
+                    [else
                       (recur next ((x x))
                              (if (null? x)
                                '()
                                (set-union (find-sets (car x) v)
-                                          (next (cdr x))))))))
-       (else
-         '()))))
+                                          (next (cdr x)))))])]
+       [else
+         '()])))
 
 ;; (compile-lookup
 ;;   'z
@@ -277,7 +277,7 @@
 ;   '((+ x y) 1 (+ z w))
 ;   '(x y z)
 ;   '(() . (z w)))
-;   
+;
 ;   => (w)
 (define (find-free-bodies bodies vars e)
   (recur next ((bodies bodies) (r '()))
@@ -292,7 +292,7 @@
 ; (find-sets-bodies
 ;   '((+ x y) (set! x y) (+ z w))
 ;   '(x y z))
-; 
+;
 ; => (x)
 (define (find-sets-bodies bodies vars)
   (recur next ((bodies bodies) (r '()))
@@ -310,9 +310,9 @@
                         (length free)
                         ; closure生成時に引数に大してboxを作る
                         (make-boxes sets vars
-                                    (recur next ((newe (cons vars free))
-                                                 (news (set-union sets (set-intersect s free)))
-                                                 (bodies bodies))
+                                    (recur next ([newe (cons vars free)]
+                                                 [news (set-union sets (set-intersect s free))]
+                                                 [bodies bodies])
                                            (compile (car bodies) newe news
                                                     (if (= (length bodies) 1)
                                                       (list 'return (length vars))
@@ -338,25 +338,19 @@
                           (compile test e s (list 'test thenc elsec)))]
                       [set! (var x)
                         (compile-lookup var e
-                                        (lambda (n)
-                                          (compile x e s (list 'assign-local n next)))
-                                        (lambda (n)
-                                          (compile x e s (list 'assign-free n next)))
-                                        (lambda (n)
-                                          (compile x e s (list 'assign-global n next))))]
+                                        (lambda (n) (compile x e s (list 'assign-local n next)))
+                                        (lambda (n) (compile x e s (list 'assign-free n next)))
+                                        (lambda (n) (compile x e s (list 'assign-global n next))))]
                       [define (var x)
                         (compile x e s (list 'define var next))]
                       [call/cc (x)
-                               (let ((c (list 'conti
+                               (let ([c (list 'conti
                                               (list 'argument
                                                     (compile x e s
                                                              (if (tail? next)
-                                                               (list 'shift
-                                                                     1
-                                                                     (cadr next)
-                                                                     '(apply))
-                                                               '(apply)))))))
-                                     (if (tail? next)
+                                                               (list 'shift 1 (cadr next) '(apply))
+                                                               '(apply)))))])
+                                 (if (tail? next)
                                        c
                                        (list 'frame next c)))]
                       [else
@@ -418,7 +412,7 @@
 ;; 継続オブジェクトからスタックを復元する
 (define restore-stack
   (lambda (v)
-    (let ((s (vector-length v)))
+    (let ([s (vector-length v)])
       (recur copy ((i 0))
              (unless (= i s)
                (vector-set! *stack* i (vector-ref v i))
@@ -451,11 +445,11 @@
 
 ;; スタックトップのn個をmだけ下にシフトする
 (define (shift-args n m s)
-  (let next-arg ((i (- n 1)))
-  (unless (< i 0)
-  (index-set! s (+ i m) (index s i))
-  (next-arg (- i 1))))
-    (- s m))
+  (recur next-arg ([i (- n 1)])
+         (unless (< i 0)
+           (index-set! s (+ i m) (index s i))
+           (next-arg (- i 1))))
+  (- s m))
 
 (define *global*
   (list '(x . 123)
@@ -500,16 +494,16 @@
                [test (then else)
                      (VM a (if a then else) f c s)]
                [plus (x)
-                     (let ((a (index f 0))
-                           (b (index f 1)))
+                     (let ([a (index f 0)]
+                           [b (index f 1)])
                        (VM (+ a b) x f c s))]
                [minus (x)
-                     (let ((a (index f 0))
-                           (b (index f 1)))
+                     (let ([a (index f 0)]
+                           [b (index f 1)])
                        (VM (- a b) x f c s))]
                [equal (x)
-                     (let ((a (index f 0))
-                           (b (index f 1)))
+                     (let ([a (index f 0)]
+                           [b (index f 1)])
                        (VM (= a b) x f c s))]
                [assign-local (n x)
                              (set-box! (index f n) a)
@@ -546,8 +540,8 @@
 (define debug
   (lambda (code)
     (let ((opecode (compile code '(() . ()) '() '(halt))))
-      (display opecode)
-      (newline)
+;      (display opecode)
+;      (newline)
       (display (VM '() opecode 0 '() 0))
       (newline))))
 
@@ -580,9 +574,6 @@
               s
               (sum (- n 1) (+ s n))))))
 (debug '(sum 10 0))
-(debug '((lambda (x)
-           (+ x x))
-         11))
 (debug '((lambda (x)
            1 2 3
            (+ x x))
