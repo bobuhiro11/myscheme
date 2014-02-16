@@ -108,41 +108,90 @@
         (cons (car s1) (set-intersect (cdr s1) s2))
         (set-intersect (cdr s1) s2)))))
 
-;; 自由変数を検索
+(define *global*
+  '((x . 123)
+    (y . 256)))
+
+;; => (x y) ; グローバル変数のリスト
+(define (global-variables)
+  (recur next ((g *global*))
+         (if (null? g)
+           '()
+           (cons (caar g)
+                 (next (cdr g))))))
+
+;; グローバル変数内のindex
+;; (global-index 'y)
+;;
+;; => 0
+(define (global-index x)
+  (recur next ((g *global*) (i 0))
+         (if (eq? (caar g) x)
+           i
+           (next (cdr g) (+ i 1)))))
+
+;; (refer-global1)
+;;
+;; => 256
+(define (refer-global i)
+  (recur next ((g *global*) (i i))
+         (if (= i 0)
+           (cdar g)
+           (next (cdr g) (- i 1)))))
+
+; (display (global-variables))
+; (display *global*)
+; (display (set-cdr! (assq 'x *global*) 100))
+
+
+;; 自由変数(グローバル変数を含まない)を検索
 ;; (find-free
 ;;   '((lambda (x y) z) 10 20)
-;;   '()                         ; 束縛変数
+;;   '(x y)                         ; 束縛変数
+;;   '(() . (x y z))                ; (ローカル変数リスト . 自由変数リスト)
 ;;   )
 ;;
 ;;   => (z)
-(define (find-free x b)
-  (cond [(symbol? x) (if (set-member? x b) '() (list x))]
+(define (find-free x b e)
+  (cond [(symbol? x)
+         ;(if (set-member? x b)
+         (if (and (not (set-member? x b))
+                  (or  (set-member? x (car e))
+                       (set-member? x (cdr e))))
+           (list x) ; 自由変数は，束縛変数でなく環境のどちらかのリストには含まれている
+           '())]
         [(pair? x)
          (record-case x
                       [quote (obj) '()]
                       [lambda (vars body)
-                        (find-free body (set-union vars b))]
+                        (find-free body (set-union vars b) e)]
                       [if (test then else)
-                        (set-union (find-free test b)
-                                   (set-union (find-free then b)
-                                              (find-free else b)))]
+                        (set-union (find-free test b e)
+                                   (set-union (find-free then b e)
+                                              (find-free else b e)))]
                       [set! (var exp)
                         (if (set-member? var b)
-                          (find-free exp b)
-                          (set-cons var (find-free exp b)))]
+                          (find-free exp b e)
+                          (set-cons var (find-free exp b e)))]
                       [call/cc (exp)
-                               (find-free exp b)]
+                               (find-free exp b e)]
                       [else
                         (let next ([x x])
                           (if (null? x)
                             '()
-                            (set-union (find-free (car x) b)
+                            (set-union (find-free (car x) b e)
                                        (next (cdr x)))))])]
         [else '()]))
 
+(display  (find-free
+  '((lambda (x y) z) 10 20)
+  '(x y)                         ; 束縛変数
+  '(() . (x y z))                ; (ローカル変数リスト . 自由変数リスト)
+  ))
+
 ;; set!により束縛される可能性のある変数
 ;; (find-sets '(lambda (x y) (set! x z))
-;;            '(x y z))
+;;            '(x y z)) ; 対象の変数
 ;;
 ;; => (x)
 (define find-sets
@@ -181,40 +230,59 @@
 ;;   '((x y) .  (z w))
 ;;   (lambda (x) (list 'local x))
 ;;   (lambda (x) (list 'free x))
+;;   (lambda (x) (list 'global x))
 ;;   )
-;;   => 
+;;   =>
 ;;   (free 0)
 (define compile-lookup
-  (lambda (x e return-local return-free)
+  (lambda (x e return-local return-free return-global)
     (recur nxtlocal ((locals (car e)) (n 0))
            (if (null? locals)
              (recur nxtfree ((free (cdr e)) (n 0))    ; free list
-                    (if (eq? (car free) x)
-                      (return-free n)
-                      (nxtfree (cdr free) (+ n 1))))
+                    (if (null? free)
+                      (return-global (global-index x)) ; global
+                      (if (eq? (car free) x)
+                        (return-free n)
+                        (nxtfree (cdr free) (+ n 1)))))
              (if (eq? (car locals) x)                 ; local list
                (return-local n)
                (nxtlocal (cdr locals) (+ n 1)))))))
+
+(display (compile-lookup
+  'y
+  '(() .  (z w))
+  (lambda (n) (list 'refer-local n ))
+  (lambda (n) (list 'refer-free  n ))
+  (lambda (n) (list 'refer-global  n ))
+))
 
 ;; (compile-refer
 ;;   'z
 ;;   '((x y) .(z w))
 ;;   '(halt))
-;; 
+;;
 ;; => (refer-free 0)
 (define compile-refer
   (lambda (x e next)
     (compile-lookup x e
                     (lambda (n) (list 'refer-local n next))
-                    (lambda (n) (list 'refer-free  n next)))))
+                    (lambda (n) (list 'refer-free  n next))
+                    (lambda (n) (list 'refer-global  n next)))))
 
+(display (compile-refer
+  'y
+  '(() .  (z w))
+  '(halt)
+  ))
+
+;; closure生成時にその自由変数を集める
 ;; (collect-free
 ;;   '(x w)                    ; 自由変数のリスト
-;;   '((a b c ) . (x y z w))   ; (ローカル変数 . 自由変数)
+;;   '((a b c) . (x y z w))    ; (ローカル変数 . 自由変数)
 ;;   '(halt))                  ; 次の命令
 ;;
-;;   => 
-;;   
+;;   =>
+;;
 ;; (refer-free 3 (argument (refer-free 0 (argument (halt)))))
 (define collect-free
   (lambda (vars e next)
@@ -222,9 +290,13 @@
       next
       (collect-free (cdr vars)
                     e
-                    (compile-refer (car vars)
-                                   e
-                                   (list 'argument next))))))
+                    (if (or (set-member? (car vars) (car e))
+                            (set-member? (car vars) (cdr e)))
+                      ; このどっちかにはあるはず(なければglobal)
+                      (compile-refer (car vars)
+                                     e
+                                     (list 'argument next))
+                      next)))))
 
 ;; (make-boxes
 ;;   '(y)
@@ -246,6 +318,7 @@
   (eq? 'return (car x)))
 
 ;; e = (ローカル変数のリスト . 自由変数のリスト)
+;; s = (set!される自由変数のリスト)
 (define (compile x e s next)
   (cond [(symbol? x)
          (compile-refer x e
@@ -256,7 +329,7 @@
          (record-case x
                       [quote (obj) (list 'constant obj next)]
                       [lambda (vars body)
-                        (let ([free (find-free body vars)]
+                        (let ([free (find-free body vars e)]
                               [sets (find-sets body vars)])
                           (collect-free free e
                                         (list 'close
@@ -279,7 +352,9 @@
                                         (lambda (n)
                                           (compile x e s (list 'assign-local n next)))
                                         (lambda (n)
-                                          (compile x e s (list 'assign-free n next))))]
+                                          (compile x e s (list 'assign-free n next)))
+                                        (lambda (n)
+                                          (compile x e s (list 'assign-global n next))))]
                       [call/cc (x)
                                (let ((c (list 'conti
                                               (list 'argument
@@ -401,6 +476,8 @@
                             (VM (index f n) x f c s)]
                [refer-free (n x)
                            (VM (index-closure c n) x f c s)]
+               [refer-global (n x)
+                           (VM (refer-global n) x f c s)]
                [indirect (x)
                          (VM (unbox a) x f c s)]
                [constant (obj x)
@@ -436,11 +513,11 @@
 
 (define evaluate
   (lambda (x)
-    (VM '() (compile x '() '() '(halt)) 0 '() 0)))
+    (VM '() (compile x '(() . ()) '() '(halt)) 0 '() 0)))
 
 (define debug
   (lambda (code)
-    (let ((opecode (compile code '() '() '(halt))))
+    (let ((opecode (compile code '(() . ()) '() '(halt))))
       (display opecode)
       (newline)
       (display (VM '() opecode 0 '() 0))
@@ -458,3 +535,4 @@
            ((lambda (y) x)
             (set! x 19)))
          29))
+(debug '((lambda (x) y) 10))
