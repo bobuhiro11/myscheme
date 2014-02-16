@@ -436,7 +436,9 @@
 (define *global*
   (list '(x . 123)
         '(y . 256)
-         (cons '+ #((plus (return 2))))))
+         (cons '= #((equal (return 2))))
+         (cons '- #((minus (return 2))))
+         (cons '+ #((plus  (return 2))))))
 
 ;; (refer-global 'x)
 ;;
@@ -453,7 +455,7 @@
     (cons (cons k v) *global*)))
 
 (define (VM a x f c s)
-;  (display-register a x f c s)
+  ;(display-register a x f c s)
   (record-case x
                [halt () a]
                [refer-local (n x)
@@ -477,6 +479,14 @@
                      (let ((a (index f 0))
                            (b (index f 1)))
                        (VM (+ a b) x f c s))]
+               [minus (x)
+                     (let ((a (index f 0))
+                           (b (index f 1)))
+                       (VM (- a b) x f c s))]
+               [equal (x)
+                     (let ((a (index f 0))
+                           (b (index f 1)))
+                       (VM (= a b) x f c s))]
                [assign-local (n x)
                              (set-box! (index f n) a)
                              (VM a x f c s)]
@@ -538,3 +548,11 @@
           (lambda (x y z)
             (+ x (+ y z)))))
 (debug '(func 1 2 3))
+(debug '(= 1 2))
+
+(debug '(define sum
+          (lambda (n s)
+            (if (= n 0)
+              s
+              (sum (- n 1) (+ s n))))))
+(debug '(sum 10 0))
