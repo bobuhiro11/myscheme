@@ -1,4 +1,4 @@
-;;; Chap 4.6 Stack Base Scheme Interpreter
+;;; Chap 4.7 Stack Base Scheme Interpreter
 
 ;; (rec sum (lambda (x) (if (= x 0) 0 (+ x (sum (- x 1))))))
 (define-syntax rec (syntax-rules ()
@@ -108,42 +108,6 @@
         (cons (car s1) (set-intersect (cdr s1) s2))
         (set-intersect (cdr s1) s2)))))
 
-(define *global*
-  '((x . 123)
-    (y . 256)))
-
-;; => (x y) ; グローバル変数のリスト
-(define (global-variables)
-  (recur next ((g *global*))
-         (if (null? g)
-           '()
-           (cons (caar g)
-                 (next (cdr g))))))
-
-;; グローバル変数内のindex
-;; (global-index 'y)
-;;
-;; => 0
-(define (global-index x)
-  (recur next ((g *global*) (i 0))
-         (if (eq? (caar g) x)
-           i
-           (next (cdr g) (+ i 1)))))
-
-;; (refer-global1)
-;;
-;; => 256
-(define (refer-global i)
-  (recur next ((g *global*) (i i))
-         (if (= i 0)
-           (cdar g)
-           (next (cdr g) (- i 1)))))
-
-; (display (global-variables))
-; (display *global*)
-; (display (set-cdr! (assq 'x *global*) 100))
-
-
 ;; 自由変数(グローバル変数を含まない)を検索
 ;; (find-free
 ;;   '((lambda (x y) z) 10 20)
@@ -240,7 +204,7 @@
            (if (null? locals)
              (recur nxtfree ((free (cdr e)) (n 0))    ; free list
                     (if (null? free)
-                      (return-global (global-index x)) ; global
+                      (return-global x)               ; global
                       (if (eq? (car free) x)
                         (return-free n)
                         (nxtfree (cdr free) (+ n 1)))))
@@ -355,6 +319,8 @@
                                           (compile x e s (list 'assign-free n next)))
                                         (lambda (n)
                                           (compile x e s (list 'assign-global n next))))]
+                      [define (var x)
+                        (compile x e s (list 'define var next))]
                       [call/cc (x)
                                (let ((c (list 'conti
                                               (list 'argument
@@ -467,6 +433,24 @@
   (next-arg (- i 1))))
     (- s m))
 
+(define *global*
+  (list '(x . 123)
+        '(y . 256)
+         (cons '+ #((plus (return 2))))))
+
+;; (refer-global 'x)
+;;
+;; => 123
+(define (refer-global k)
+  (cdr (assq k *global*)))
+
+;; (assign-global 'x 800)
+(define (assign-global k v)
+  (set-cdr! (assq k *global*) v))
+
+(define (define-global k v)
+  (set! *global*
+    (cons (cons k v) *global*)))
 
 (define (VM a x f c s)
 ;  (display-register a x f c s)
@@ -489,12 +473,22 @@
                     (VM a x f c s)]
                [test (then else)
                      (VM a (if a then else) f c s)]
+               [plus (x)
+                     (let ((a (index f 0))
+                           (b (index f 1)))
+                       (VM (+ a b) x f c s))]
                [assign-local (n x)
                              (set-box! (index f n) a)
                              (VM a x f c s)]
                [assign-free (n x)
                             (set-box! (index-closure c n) a)
                             (VM a x f c s)]
+               [assign-global (n x)
+                              (assign-global n a)
+                              (VM a x f c s)]
+               [define (n x)
+                              (define-global n a)
+                              (VM a x f c s)]
                [conti (x)
                       (VM (continuation s) x f c s)]
                [nuate (stack x)
@@ -536,3 +530,11 @@
             (set! x 19)))
          29))
 (debug '((lambda (x) y) 10))
+(debug '(set! y 100) )
+(debug 'y)
+(debug '+)
+(debug '(+ 1 2))
+(debug '(define func
+          (lambda (x y z)
+            (+ x (+ y z)))))
+(debug '(func 1 2 3))
