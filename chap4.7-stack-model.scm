@@ -13,10 +13,14 @@
                   i ...))))
 
 ;; (record (x y z) '(1 2 3) (+ x y z))
+;(define-syntax record
+;  (syntax-rules ()
+;                ((_ (var ...) val exp ...)
+;                 (apply (lambda (var ...) exp ...) val))))
 (define-syntax record
   (syntax-rules ()
-                ((_ (var ...) val exp ...)
-                 (apply (lambda (var ...) exp ...) val))))
+                ((_ args parm exps ...)
+                 (apply (lambda args exps ...) parm))))
 
 ;; (record-case '(hello 1 2 3)
 ;;              (hello (x y z)
@@ -281,6 +285,22 @@
 (define (tail? x)
   (eq? 'return (car x)))
 
+(define (compile-lambda e s next vars bodies)
+  (let ([free (find-free (car bodies) vars e)]
+        [sets (find-sets (car bodies) vars)])
+    (collect-free free e
+                  (list 'close
+                        (length free)
+                        ; closure生成時に引数に大してboxを作る
+                        (make-boxes sets vars
+                                    (compile (car bodies)
+                                             (cons vars free)
+                                             (set-union
+                                               sets
+                                               (set-intersect s free))
+                                             (list 'return (length vars))))
+                        next))))
+
 ;; e = (ローカル変数のリスト . 自由変数のリスト)
 ;; s = (set!される自由変数のリスト)
 (define (compile x e s next)
@@ -292,21 +312,8 @@
         [(pair? x)
          (record-case x
                       [quote (obj) (list 'constant obj next)]
-                      [lambda (vars body)
-                        (let ([free (find-free body vars e)]
-                              [sets (find-sets body vars)])
-                          (collect-free free e
-                                        (list 'close
-                                              (length free)
-                                              ; closure生成時に引数に大してboxを作る
-                                              (make-boxes sets vars
-                                                          (compile body
-                                                                   (cons vars free)
-                                                                   (set-union
-                                                                     sets
-                                                                     (set-intersect s free))
-                                                                   (list 'return (length vars))))
-                                              next)))]
+                      [lambda (vars . bodies)
+                        (compile-lambda e s next vars bodies)]
                       [if (test then else)
                         (let ([thenc (compile then e s next)]
                               [elsec (compile else e s next)])
@@ -335,7 +342,6 @@
                                        c
                                        (list 'frame next c)))]
                       [else
-
                         (let loop (;[func (car x)]
                                    [args (cdr x)]
                                    [c (compile (car x) e s
