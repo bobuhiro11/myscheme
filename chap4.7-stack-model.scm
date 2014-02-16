@@ -556,3 +556,6 @@
               s
               (sum (- n 1) (+ s n))))))
 (debug '(sum 10 0))
+(debug '((lambda (x)
+           (+ x x))
+         11))
