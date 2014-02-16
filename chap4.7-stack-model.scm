@@ -151,11 +151,11 @@
                                        (next (cdr x)))))])]
         [else '()]))
 
-(display  (find-free
-  '((lambda (x y) z) 10 20)
-  '(x y)                         ; 束縛変数
-  '(() . (x y z))                ; (ローカル変数リスト . 自由変数リスト)
-  ))
+;(display  (find-free
+;  '((lambda (x y) z) 10 20)
+;  '(x y)                         ; 束縛変数
+;  '(() . (x y z))                ; (ローカル変数リスト . 自由変数リスト)
+;  ))
 
 ;; set!により束縛される可能性のある変数
 ;; (find-sets '(lambda (x y) (set! x z))
@@ -216,14 +216,6 @@
                (return-local n)
                (nxtlocal (cdr locals) (+ n 1)))))))
 
-(display (compile-lookup
-  'y
-  '(() .  (z w))
-  (lambda (n) (list 'refer-local n ))
-  (lambda (n) (list 'refer-free  n ))
-  (lambda (n) (list 'refer-global  n ))
-))
-
 ;; (compile-refer
 ;;   'z
 ;;   '((x y) .(z w))
@@ -236,12 +228,6 @@
                     (lambda (n) (list 'refer-local n next))
                     (lambda (n) (list 'refer-free  n next))
                     (lambda (n) (list 'refer-global  n next)))))
-
-(display (compile-refer
-  'y
-  '(() .  (z w))
-  '(halt)
-  ))
 
 ;; closure生成時にその自由変数を集める
 ;; (collect-free
@@ -285,20 +271,52 @@
 (define (tail? x)
   (eq? 'return (car x)))
 
+; for multi bodies
+;
+; (find-free-bodies
+;   '((+ x y) 1 (+ z w))
+;   '(x y z)
+;   '(() . (z w)))
+;   
+;   => (w)
+(define (find-free-bodies bodies vars e)
+  (recur next ((bodies bodies) (r '()))
+         (if (null? bodies)
+           r
+           (next (cdr bodies)
+                 (set-union r
+                            (find-free (car bodies) vars e))))))
+
+; for multi bodies
+;
+; (find-sets-bodies
+;   '((+ x y) (set! x y) (+ z w))
+;   '(x y z))
+; 
+; => (x)
+(define (find-sets-bodies bodies vars)
+  (recur next ((bodies bodies) (r '()))
+         (if (null? bodies)
+           r
+           (next (cdr bodies)
+                 (set-union r
+                            (find-sets (car bodies) vars))))))
+
 (define (compile-lambda e s next vars bodies)
-  (let ([free (find-free (car bodies) vars e)]
-        [sets (find-sets (car bodies) vars)])
+  (let ([free (find-free  bodies vars e)] ; free variable
+        [sets (find-sets  bodies vars)])  ; assigned variable
     (collect-free free e
                   (list 'close
                         (length free)
                         ; closure生成時に引数に大してboxを作る
                         (make-boxes sets vars
-                                    (compile (car bodies)
-                                             (cons vars free)
-                                             (set-union
-                                               sets
-                                               (set-intersect s free))
-                                             (list 'return (length vars))))
+                                    (recur next ((newe (cons vars free))
+                                                 (news (set-union sets (set-intersect s free)))
+                                                 (bodies bodies))
+                                           (compile (car bodies) newe news
+                                                    (if (= (length bodies) 1)
+                                                      (list 'return (length vars))
+                                                      (next newe news (cdr bodies))))))
                         next))))
 
 ;; e = (ローカル変数のリスト . 自由変数のリスト)
@@ -563,5 +581,9 @@
               (sum (- n 1) (+ s n))))))
 (debug '(sum 10 0))
 (debug '((lambda (x)
+           (+ x x))
+         11))
+(debug '((lambda (x)
+           1 2 3
            (+ x x))
          11))
