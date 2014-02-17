@@ -1,26 +1,36 @@
 (load "./util.scm")
 (load "./macro.scm")
 (load "./compile.scm")
-(load "./vm-3imp.scm")
+(load "./linear.scm")
+(load "./vm.scm")
 
 (define evaluate
   (lambda (x)
-    (VM '() (compile (expand-traditional-macro x) '(() . ()) '() '(halt)) 0 '() 0)))
+    (VM '()     ; accumlator
+        0       ; program counter
+        0       ; frame pointer
+        '()     ; closure
+        0       ; stack pointer
+        (3imp->linaer ;code
+         (compile (expand-traditional-macro x) '(() . ()) '() '(halt))
+         0))))
 
 (define debug
   (lambda (code)
-    (let ((opecode (compile (expand-traditional-macro code) '(() . ()) '() '(halt))))
+    (let ([opecode (3imp->linear
+                    (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
+                    0)])
       (display opecode)
       (newline)
-      (display (VM '() opecode 0 '() 0))
+      (display (VM '() 0 0 '() 0 opecode))
       (newline))))
 
 (debug '((lambda (x y) y) 1 2))
-(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
+;(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
 (debug '(quote hello))
 (debug '((lambda (x) x) 3))
 (debug '(if #t 5 0))
-(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
+;(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
 (debug '((lambda (f x) (f x)) (lambda (x) x) 13))
 (debug 17)
 (debug '((lambda (x)
@@ -32,10 +42,17 @@
 (debug 'y)
 (debug '+)
 (debug '(+ 1 2))
+
+(debug '(define func2
+          (lambda (x y)
+            (+ x y))))
+
+(debug '(func2 3 9))
+
 (debug '(define func
-          (lambda (x y z)
-            (+ x (+ y z)))))
-(debug '(func 1 2 3))
+          (lambda (x y)
+            (+ x (+ y 2) ))))
+(debug '(func 1  5))
 (debug '(= 1 2))
 
 (debug '(define sum

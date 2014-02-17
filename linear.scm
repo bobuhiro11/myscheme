@@ -27,8 +27,9 @@
                  [close (n body x)
                         (let* ([nextc (3imp->linear x (+ adr 1))]
                                [bodyadr (+ 1 adr (length nextc))]
-                               [bodyc (3imp->linear body bodyadr)])
-                          (cons (list adr 'close n bodyadr)
+                               [bodyc (3imp->linear body bodyadr)]
+                               [ebodyadr (- (+ bodyadr (length bodyc)) 1)])
+                          (cons (list adr 'close n bodyadr ebodyadr)
                                 (append nextc bodyc)))]
                  [box (n x)
                               (cons (list adr 'box n)
