@@ -26,11 +26,11 @@
       (newline))))
 
 (debug '((lambda (x y) y) 1 2))
-;(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
+(debug '(call/cc (lambda (k)  (if (k #f) 10 20))))
 (debug '(quote hello))
 (debug '((lambda (x) x) 3))
 (debug '(if #t 5 0))
-;(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
+(debug '(((call/cc (lambda (c) c)) (lambda (x) x)) 11))
 (debug '((lambda (f x) (f x)) (lambda (x) x) 13))
 (debug 17)
 (debug '((lambda (x)

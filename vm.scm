@@ -26,15 +26,6 @@
   (lambda (c n)
     (vector-ref c (+ n 2))))
 
-;; create continuation(closure object)
-;(define continuation
-;  (lambda (s)
-;    (closure
-;      (list 'refer-local
-;            0
-;            (list 'nuate  (save-stack s) (list 'return 0)))
-;      0
-;      '())))
 
 (define *stack*
   (make-vector 100))
@@ -173,10 +164,10 @@
         code
         (lst-index *ram-code* i)))))
 
-;; RAMの最後のアドレス
-(define ram-last-address
-  (lambda ()
-    (recur next ([code *ram-code*]
+;; 最後のアドレス
+(define last-address
+  (lambda (code)
+    (recur next ([code code]
                  [max 0])
            (if (null? code)
              max
@@ -196,7 +187,7 @@
 ;;
 (define move-ram
   (lambda (n m rom-code)
-    (let ([adr-diff (- (1+ (ram-last-address)) n)]) 
+    (let ([adr-diff (- (1+ (last-address *ram-code*)) n)])
       (recur next ([i n])
              (if (> i m)
                (+ n adr-diff) ; RAM上での開始アドレス
@@ -249,6 +240,26 @@
       (vector-set! v 1 newm)
       v)))
 
+;; create continuation(closure object)
+;(define continuation
+;  (lambda (s)
+;    (closure
+;      (list 'refer-local
+;            0
+;            (list 'nuate  (save-stack s) (list 'return 0)))
+;      0
+;      '())))
+
+; rom-codeの最後に継続本体を追加する
+; (display (continuation 3 '( (2 hoge) (3 hage))))
+(define continuation
+  (lambda (s rom-code)
+    (let ([start-adr (1+ (last-address rom-code))])
+      (append (list (list start-adr        'refer-local 0)
+                    (list (+ start-adr 1)  'nuate (save-stack s))
+                    (list (+ start-adr 2)  'return 0))
+              rom-code))))
+
 ;;
 ;; a: accumlator
 ;; pc: プログラムカウンタ
@@ -261,6 +272,8 @@
   ;(display-register a x f c s)
   (record-case ;(cdr (code-index code pc)) ; 先頭にはアドレスがある
                (let ([x (code-index code pc)])
+                 ;(display code)
+                 ;(newline)
                  ;(display "pc=")
                  ;(display pc)
                  ;(display "x=")
@@ -310,9 +323,15 @@
                               (define-global n a code)
                               (VM a (1+ pc) f c s code)]
                [conti ()
-                      "badbadbad"]
+                      (set! a  (closure 
+                                 (+ 1 (last-address code))
+                                 (+ 3 (last-address code))
+                                 0
+                                 s))
+                      (set! code (continuation s code))
+                      (VM a (1+ pc) f c s code)]
                [nuate (stack)
-                      "badbadbad"]
+                      (VM a (1+ pc) f c (restore-stack stack) code)]
                [frame (retadr)
                       (VM a (1+ pc) f c (push retadr (push f (push c s))) code)]
                [argument ()
