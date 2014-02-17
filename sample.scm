@@ -174,3 +174,14 @@
 ;                     (display z))
 ;              (bye   (x y z)
 ;                     (- x y z))))
+
+(define (myabs x)
+  (if (> x 0)
+    x
+    (- 0 x)))
+
+(define (addelement x)
+  (append x '(a b c)))
+
+(display (disasm myabs))
+(display (disasm addelement))

@@ -394,7 +394,7 @@
   (lambda (x)
     (if (pair? x)
       (record-case x
-                   [lambda (vars . bodies)           
+                   [lambda (vars . bodies)
                      ; lambda式の場合(define-macro内も含む)は，bodyのみを評価する．
                      (append (list 'lambda vars)
                            (map expand-traditional-macro bodies))]
@@ -411,9 +411,9 @@
 ;;             `(* ,x ,x)))
 (define def-traditional-macro
   (lambda (name closure)
-    (set! *tradional-macros*
+    (set! *traditional-macros*
       (cons (cons name closure)
-            *tradional-macros*))))
+            *traditional-macros*))))
 
 (define *stack*
   (make-vector 100))
@@ -581,8 +581,8 @@
 (define debug
   (lambda (code)
     (let ((opecode (compile (expand-traditional-macro code) '(() . ()) '() '(halt))))
-;      (display opecode)
-;      (newline)
+      (display opecode)
+      (newline)
       (display (VM '() opecode 0 '() 0))
       (newline))))
 
