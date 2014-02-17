@@ -1,4 +1,7 @@
-;;; Virtual Machine
+;;; Virtual Machine for 3imp format
+;;;
+;;;
+;;; Compilierが吐いた3imp VM用コードを実行する
 
 (load "./util.scm")
 
@@ -129,7 +132,6 @@
   (set! *global*
     (cons (cons k v) *global*)))
 
-;; Virtual Machine for 3imp format
 (define (VM a x f c s)
   ;(display-register a x f c s)
   (record-case x

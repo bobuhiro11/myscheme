@@ -1,7 +1,7 @@
 (load "./util.scm")
 (load "./macro.scm")
 (load "./compile.scm")
-(load "./vm.scm")
+(load "./vm-3imp.scm")
 
 (define evaluate
   (lambda (x)

@@ -1,4 +1,6 @@
 ;;; Macro
+;;;
+;;; 伝統的なマクロにより，compile以前にコードの展開する
 
 (load "./util.scm")
 

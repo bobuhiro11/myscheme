@@ -1,4 +1,6 @@
 ;;; Compilier
+;;;
+;;; マクロ展開後のschemeコードを，3imp VM用コードへ変換
 
 (load "./util.scm")
 
