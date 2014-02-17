@@ -271,7 +271,7 @@
 (define (tail? x)
   (eq? 'return (car x)))
 
-; for multi bodies
+; lambda式の複数のbodyに対して
 ;
 ; (find-free-bodies
 ;   '((+ x y) 1 (+ z w))
@@ -287,7 +287,7 @@
                  (set-union r
                             (find-free (car bodies) vars e))))))
 
-; for multi bodies
+; lambda式の複数のbodyに対して
 ;
 ; (find-sets-bodies
 ;   '((+ x y) (set! x y) (+ z w))
@@ -303,12 +303,12 @@
                             (find-sets (car bodies) vars))))))
 
 (define (compile-lambda e s next vars bodies)
-  (let ([free (find-free  bodies vars e)] ; free variable
-        [sets (find-sets  bodies vars)])  ; assigned variable
+  (let ([free (find-free  bodies vars e)] ; lambda式内の自由変数
+        [sets (find-sets  bodies vars)])  ; lambda式内で，varsのうちset!される可能性のある変数
     (collect-free free e
                   (list 'close
                         (length free)
-                        ; closure生成時に引数に大してboxを作る
+                        ; closure生成時に引数に対してboxを作る
                         (make-boxes sets vars
                                     (recur next ([newe (cons vars free)]
                                                  [news (set-union sets (set-intersect s free))]
@@ -353,6 +353,10 @@
                                  (if (tail? next)
                                        c
                                        (list 'frame next c)))]
+                      [define-macro (name closure)
+                                    (def-traditional-macro name
+                                               (eval closure null-environment))
+                                    '(halt)]
                       [else
                         (let loop (;[func (car x)]
                                    [args (cdr x)]
@@ -373,6 +377,43 @@
 
         [else (list 'constant x next)]))
 
+(define *traditional-macros* '())
+
+;; (get-traditional-macro 'double)
+;;
+;; => (double . (lambda (list '* x x)))
+(define get-traditional-macro
+  (lambda (x)
+    (assq x *traditional-macros*)))
+
+;; (expand-traditional-macro '(double (double 2)))
+;;
+;; => (* (* 2 2) (* 2 2))
+;;
+(define expand-traditional-macro
+  (lambda (x)
+    (if (pair? x)
+      (record-case x
+                   [lambda (vars . bodies)           
+                     ; lambda式の場合(define-macro内も含む)は，bodyのみを評価する．
+                     (append (list 'lambda vars)
+                           (map expand-traditional-macro bodies))]
+                   [else
+                     (let ([macro (get-traditional-macro (car x))]
+                           [args (map expand-traditional-macro (cdr x))])
+                       (if macro
+                         (apply (cdr macro) args)
+                         (cons (car x) args)))])
+      x)))
+
+;; (def-traditional-macro 'double
+;;            (lambda (x)
+;;             `(* ,x ,x)))
+(define def-traditional-macro
+  (lambda (name closure)
+    (set! *tradional-macros*
+      (cons (cons name closure)
+            *tradional-macros*))))
 
 (define *stack*
   (make-vector 100))
@@ -535,11 +576,11 @@
 
 (define evaluate
   (lambda (x)
-    (VM '() (compile x '(() . ()) '() '(halt)) 0 '() 0)))
+    (VM '() (compile (expand-traditional-macro x) '(() . ()) '() '(halt)) 0 '() 0)))
 
 (define debug
   (lambda (code)
-    (let ((opecode (compile code '(() . ()) '() '(halt))))
+    (let ((opecode (compile (expand-traditional-macro code) '(() . ()) '() '(halt))))
 ;      (display opecode)
 ;      (newline)
       (display (VM '() opecode 0 '() 0))
@@ -578,3 +619,21 @@
            1 2 3
            (+ x x))
          11))
+
+(debug '(define-macro double
+                      (lambda (x)
+                        (list '+ x x))))
+(debug '(define-macro begin
+                      (lambda exps
+                        (list (append (list 'lambda '())
+                                      exps)))))
+(debug '(double 10))
+(debug '(begin 10 20 30))
+
+(debug '(define-macro let
+                      (lambda (binds . bodies)
+                        (cons (append (list 'lambda (map (lambda (x) (car x)) binds))
+                                      bodies)
+                              (map (lambda (x) (cadr x)) binds)))))
+
+(debug '(let ((a 10)) (+ a 1)))
