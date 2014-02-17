@@ -53,12 +53,12 @@
     (if (pair? x)
       (record-case x
                    [lambda (vars . bodies)
-                     (display "vars=")
-                     (display vars)
-                     (newline)
-                     (display "bodies=")
-                     (display bodies)
-                     (newline)
+                     ;(display "vars=")
+                     ;(display vars)
+                     ;(newline)
+                     ;(display "bodies=")
+                     ;(display bodies)
+                     ;(newline)
                      (append (list 'lambda vars)
                            (map expand-macro bodies))]
                    [else
@@ -69,12 +69,12 @@
                          (cons (car x) args)))])
       x)))
 
-(display (expand-macro '(lambda (x y) (+ x y))))
-(newline)
-(display (expand-macro '(lambda args (cons args y))))
-(newline)
-(display (expand-macro '(define-macro (lambda (x . y) (cons x y)))))
-(newline)
+;(display (expand-macro '(lambda (x y) (+ x y))))
+;(newline)
+;(display (expand-macro '(lambda args (cons args y))))
+;(newline)
+;(display (expand-macro '(define-macro (lambda (x . y) (cons x y)))))
+;(newline)
 
 
 ;; (def-macro 'double
@@ -147,7 +147,7 @@
 ;  (syntax-rules ()
 ;                ((_ args parm exps ...)
 ;                 (apply (lambda args exps ...) parm))))
-;(display 
+;(display
 ;  (record (x . y) '(1 4) y)
 ;  )
 ;;; (record-case '(hello 1 2 3)
@@ -183,5 +183,119 @@
 (define (addelement x)
   (append x '(a b c)))
 
-(display (disasm myabs))
-(display (disasm addelement))
+;(display (disasm myabs))
+;(display (disasm addelement))
+
+;(frame (halt) (conti (argument (close 0 (frame (test (constant 10 (return 1)) (constant 20 (return 1))) (constant #f (argument (refer-local 0 (apply))))) (apply)))))
+(define vmcode->ccode
+  (lambda (code adr)
+    (record-case code
+                 [halt ()
+                       (list (list adr 'halt))]
+                 [refer-local (n x)
+                              (cons (list adr 'refer-local n)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [refer-free (n x)
+                              (cons (list adr 'refer-free n)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [refer-global (n x)
+                              (cons (list adr 'refer-global n)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [indirect (x)
+                              (cons (list adr 'indirect)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [constant (obj x)
+                              (cons (list adr 'constant obj)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [close (n body x)
+                        (let* ([nextc (vmcode->ccode x (+ adr 1))]
+                               [bodyadr (+ 1 adr (length nextc))]
+                               [bodyc (vmcode->ccode body bodyadr)])
+                          (cons (list adr 'close n bodyadr)
+                                (append nextc bodyc)))]
+                 [box (n x)
+                              (cons (list adr 'box n)
+                                    (vmcode->ccode x (+ adr 1)))]
+                 [test (then else)
+                       (let* ([thenc (vmcode->ccode then (+ adr 1))]
+                              [elsadr (+ 1 adr (length thenc))]
+                              [elsec (vmcode->ccode else elsadr)])
+                         (cons (list adr 'test elsadr)
+                               (append thenc elsec)))]
+                 [plus (x)
+                       (cons (list adr 'plus)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [minus (x)
+                       (cons (list adr 'minus)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [equal (x)
+                       (cons (list adr 'equal)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [assign-local (n x)
+                       (cons (list adr 'assign-local n)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [assign-free (n x)
+                       (cons (list adr 'assign-free n)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [assign-global (n x)
+                       (cons (list adr 'assign-global n)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [define (n x)
+                       (cons (list adr 'define n)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [conti (x)
+                       (cons (list adr 'conti )
+                             (vmcode->ccode x (+ adr 1)))]
+                 [nuate (stack x)
+                       (cons (list adr 'nuate stack)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [frame (ret x)
+                        (let* ([xcode (vmcode->ccode x (+ adr 1))]
+                               [retadr (+ 1 adr (length xcode))]
+                               [retcode (vmcode->ccode ret retadr)])
+                          (cons (list adr 'frame retadr)
+                                (append xcode retcode)))]
+                 [argument (x)
+                       (cons (list adr 'argument)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [shift (n m x)
+                       (cons (list adr 'shift n m)
+                             (vmcode->ccode x (+ adr 1)))]
+                 [apply ()
+                       (list (list adr 'apply ))]
+                 [return (n)
+                         (list (list adr 'return n))])))
+
+(define display-ccode
+  (lambda (ccode)
+    (if (null? ccode)
+      '()
+      (begin
+        (map (lambda (x) (display x) (display " "))(car ccode))
+        (newline)
+        (display-ccode (cdr ccode))))))
+
+(display-ccode (vmcode->ccode '(halt) 0))
+(newline)
+(display-ccode (vmcode->ccode '(refer-local 0 (halt)) 0))
+(newline)
+(display-ccode (vmcode->ccode '(test (halt) (halt)) 0))
+(newline)
+(display-ccode (vmcode->ccode '(close 0 (test (halt) (halt)) (halt)) 0))
+(newline)
+(display-ccode (vmcode->ccode '(frame (halt) (plus (halt))) 0))
+(newline)
+(display-ccode
+  (vmcode->ccode
+    '(frame (halt)
+            (conti
+              (argument
+                (close 0
+                       (frame (test (constant 10 (return 1)) (constant 20 (return 1)))
+                              (constant #f
+                                        (argument
+                                          (refer-local 0
+                                                       (apply)))))
+                       (apply)))))
+    0))
+(newline)
