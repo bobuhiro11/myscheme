@@ -353,8 +353,8 @@
                          (VM a (1+ pc) f argp c (push a s) code)]
                [shift (n m)
                       (VM a (1+ pc) f (+ argp (- n m)) c (shift-args n m s) code)]
-               [apply ()
-                      (VM a (closure-body a) (+ argp 4) s a s code)]
+               [apply (n)
+                      (VM a (closure-body a) (- s n) s a s code)]
                [return (n)
                        (let1 s (- s n)
                              (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 4) code))]))

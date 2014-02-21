@@ -79,8 +79,8 @@
                  [shift (n m x)
                        (cons (list adr 'shift n m)
                              (3imp->linear x (+ adr 1)))]
-                 [apply ()
-                       (list (list adr 'apply ))]
+                 [apply (n)
+                       (list (list adr 'apply n))]
                  [return (n)
                          (list (list adr 'return n))])))
 

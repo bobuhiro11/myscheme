@@ -248,8 +248,8 @@
                                               (list 'argument
                                                     (compile x e s
                                                              (if (tail? next)
-                                                               (list 'shift 1 (cadr next) '(apply))
-                                                               '(apply)))))])
+                                                               (list 'shift 1 (cadr next) '(apply 1))
+                                                               '(apply 1)))))])
                                  (if (tail? next)
                                        c
                                        (list 'frame next c)))]
@@ -262,8 +262,9 @@
                                    [args (cdr x)]
                                    [c (compile (car x) e s
                                                (if (tail? next)
-                                                 (list 'shift (length (cdr x)) (cadr next) '(apply))
-                                                 '(apply)))])
+                                                 (list 'shift (length (cdr x)) (cadr next)
+                                                       (list 'apply (length (cdr x))))
+                                                 (list 'apply (length (cdr x)))))])
                           ; (list 'shift (length args) (cadr next) (list 'apply (length args)))
                           ; (list 'apply (length args))))])
                           (if (null? args)
