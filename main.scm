@@ -27,14 +27,18 @@
       (display (VM '() 0 0 0 '() 0 opecode2))
       (newline))))
 
-;(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
-;(debug 'x)
-;(debug '(+ 1 2))
-;(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
-;(debug '(+ (+ 1 2) (+ 3 4)))
-;(debug '(+ 20 (call/cc (lambda (c) (set! x c) (c 10)))))
-;(newline)
-;(display *ram-code*)
-;(newline)
-;(debug 'x)
-;(debug '(x 3))
+;; C言語ようにフォーマットする．
+(define linear-compile
+  (lambda (code)
+    (map (lambda (x)
+           (recur next ([x x])
+                  (unless (null? x)
+                    (display (car x))
+                    (display " ")
+                    (next (cdr x))))
+           (newline))
+        (3imp->linear
+         (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
+         0))))
+
+(linear-compile '(+ 1 2))
