@@ -17,12 +17,13 @@
 
 (define debug
   (lambda (code)
-    (let ([opecode (3imp->linear
-                    (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
-                    0)])
+    (let* ([opecode  (compile (expand-traditional-macro code) '(() . ()) '() '(halt))]
+           [opecode2 (3imp->linear opecode 0)])
       (display opecode)
       (newline)
-      (display (VM '() 0 0 '() 0 opecode))
+      (display opecode2)
+      (newline)
+      (display (VM '() 0 0 '() 0 opecode2))
       (newline))))
 
 (debug '((lambda (x y) y) 1 2))
@@ -83,3 +84,7 @@
                               (map (lambda (x) (cadr x)) binds)))))
 
 (debug '(let ((a 10)) (+ a 1)))
+(debug '(define x 10))
+
+(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
+(debug 'x)

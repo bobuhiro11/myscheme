@@ -30,9 +30,11 @@
                                    (set-union (find-free then b e)
                                               (find-free else b e)))]
                       [set! (var exp)
-                        (if (set-member? var b)
-                          (find-free exp b e)
-                          (set-cons var (find-free exp b e)))]
+                        (if (and (not (set-member? x b))
+                                 (or  (set-member? x (car e))
+                                      (set-member? x (cdr e))))
+                          (set-cons var (find-free exp b e))
+                          (find-free exp b e))]
                       [call/cc (exp)
                                (find-free exp b e)]
                       [else
@@ -182,6 +184,7 @@
                  (set-union r
                             (find-free (car bodies) vars e))))))
 
+
 ; lambda式の複数のbodyに対して
 ;
 ; (find-sets-bodies
@@ -198,8 +201,8 @@
                             (find-sets (car bodies) vars))))))
 
 (define (compile-lambda e s next vars bodies)
-  (let ([free (find-free  bodies vars e)] ; lambda式内の自由変数
-        [sets (find-sets  bodies vars)])  ; lambda式内で，varsのうちset!される可能性のある変数
+  (let ([free (find-free-bodies  bodies vars e)] ; lambda式内の自由変数
+        [sets (find-sets-bodies  bodies vars)])  ; lambda式内で，varsのうちset!される可能性のある変数
     (collect-free free e
                   (list 'close
                         (length free)
