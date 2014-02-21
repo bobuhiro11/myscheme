@@ -72,8 +72,8 @@
                (copy (+ i 1))))
       s)))
 
-  (define (display-register a pc f argp c s)
-    (newline)
+(define (display-register a pc f argp c s)
+  (newline)
     (display "a=") (display a) (newline)
     (display "pc=") (display pc) (newline)
     (display "f=") (display f) (newline)
@@ -120,7 +120,7 @@
 
 ;; (assign-global 'x 800)
 (define (assign-global k v rom-code)
-  (set-cdr! (assq k *global*) 
+  (set-cdr! (assq k *global*)
             (if (vector? v)
               (save-closure-body v rom-code)   ; closureの場合は本体の命令コードをramに保存する．
               v)))
@@ -130,7 +130,7 @@
     (cons (cons k
                 (if (vector? v)
                   (save-closure-body v rom-code)   ; closureの場合は本体の命令コードをramに保存する．
-                  v)) 
+                  v))
           *global*)))
 
 (define 1+
@@ -227,6 +227,39 @@
                          *ram-code*))
                  (next (1+ i))))))))
 
+;; スタックvector から，最小の戻りアドレスを探す
+;;
+;; #(end-of-frame 18 () 0 0 end-of-frame 13 () 0 0))
+;; 
+;; => 13
+(define retadr-from-stack
+  (lambda (stack)
+    (recur next ([i (- (vector-length stack) 1)])
+           (if (eq? (vector-ref stack i) 'end-of-frame)
+             (vector-ref stack (1+ i))
+             (next (- i 1))))))
+
+;; スタックvector の中の戻りアドレスにoffsetを加える
+;;
+;; (addoffset
+;;   '#(end-of-frame 18 () 0 0 end-of-frame 13 () 0 0)
+;;   100)
+;;
+;;  =>
+;; #(end-of-frame 118 () 0 0 end-of-frame 113 () 0 0)
+(define addoffset
+  (lambda (stack offset)
+    (recur next ([i (- (vector-length stack) 1)])
+           (if (< i 0)
+             stack 
+             (begin 
+               (when (eq? (vector-ref stack i) 'end-of-frame)
+                 (vector-set! stack
+                              (1+ i)
+                              (+ offset (vector-ref stack (1+ i)))))
+               (next (- i 1)))))))
+
+
 ;; クロージャvをグローバルな空間に配置する場合は，
 ;; 本体をRAMに移動する．
 ;; 返値は，あらたなクロージャオブジェクト
@@ -242,6 +275,18 @@
            [newm (+ m (- newn n))])
       (vector-set! v 0 newn)
       (vector-set! v 1 newm)
+      (let ([ins (code-index *ram-code* (1+ newn))])
+        ; もし対象のクロージャが継続であれば，スタックフレーム内に存在する
+        ; 戻りアドレスについても，考慮する必要がある．
+        (when (eq? (cadr ins) 'nuate)
+          (cons (list (1+ newn)
+                      'nuate
+                      (addoffset (caddr ins)
+                                 (- (move-ram (retadr-from-stack (caddr ins))
+                                              (last-address rom-code)
+                                              rom-code)
+                                    (retadr-from-stack (caddr ins)))))
+                *ram-code*)))
       v)))
 
 ;; create continuation(closure object)
@@ -348,7 +393,8 @@
                [nuate (stack)
                       (VM a (1+ pc) f argp c (restore-stack stack) code)]
                [frame (retadr)
-                      (VM a (1+ pc) f argp c (push f (push argp (push c (push retadr s)))) code)]
+                      (VM a (1+ pc) f argp c
+                          (push f (push argp (push c (push retadr (push 'end-of-frame s))))) code)]
                [argument ()
                          (VM a (1+ pc) f argp c (push a s) code)]
                [shift (n m)
@@ -357,4 +403,4 @@
                       (VM a (closure-body a) (- s n) s a s code)]
                [return (n)
                        (let1 s (- s n)
-                             (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 4) code))]))
+                             (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 5) code))]))

@@ -69,5 +69,6 @@
 
 (test* "#30" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
 (test* "#31" '#(1055 1057)  (evaluate 'x))
+(test* "#32" 25             (evaluate '(x 5)))
 
 (test-end)
