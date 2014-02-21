@@ -9,6 +9,7 @@
     (VM '()     ; accumlator
         0       ; program counter
         0       ; frame pointer
+        0       ; argp pointer
         '()     ; closure
         0       ; stack pointer
         (3imp->linear ;code
@@ -23,5 +24,9 @@
       (newline)
       (display opecode2)
       (newline)
-      (display (VM '() 0 0 '() 0 opecode2))
+      (display (VM '() 0 0 0 '() 0 opecode2))
       (newline))))
+
+;(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
+;(debug 'x)
+;(debug '(+ 1 2))

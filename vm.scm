@@ -46,11 +46,11 @@
   (lambda (s i v)
     (vector-set! *stack* (- (- s i) 1) v)))
 
-(define find-link
-  (lambda (n e)
-    (if (= n 0)
-      e
-      (find-link (- n 1) (index e -1)))))
+;(define find-link
+;  (lambda (n e)
+;    (if (= n 0)
+;      e
+;      (find-link (- n 1) (index e -1)))))
 
 ;; スタックsの複製を作る
 (define save-stack
@@ -72,22 +72,23 @@
                (copy (+ i 1))))
       s)))
 
-;(define (display-register a x f c s)
-;    (newline)
-;    (display "a=") (display a) (newline)
-;    (display "x=") (display x) (newline)
-;    (display "f=") (display f) (newline)
-;    (display "c=") (display c) (newline)
-;    (display "s=") (display s) (newline)
-;    (display "---bottom---\n")
-;    (map (lambda (x) (if (undefined? x)
-;                       '()
-;                       (begin
-;                         (display x)
-;                         (newline))))
-;         (vector->list *stack*))
-;    (display "--- top ----\n")
-;    (newline))
+  (define (display-register a pc f argp c s)
+    (newline)
+    (display "a=") (display a) (newline)
+    (display "pc=") (display pc) (newline)
+    (display "f=") (display f) (newline)
+    (display "argp=") (display argp) (newline)
+    (display "c=") (display c) (newline)
+    (display "s=") (display s) (newline)
+    (display "---bottom---\n")
+    (map (lambda (x) (if (undefined? x)
+                       '()
+                       (begin
+                         (display x)
+                         (newline))))
+         (vector->list *stack*))
+    (display "--- top ----\n")
+    (newline))
 
 (define (box x)
     (cons 'box x))
@@ -264,12 +265,13 @@
 ;; a: accumlator
 ;; pc: プログラムカウンタ
 ;; f: フレームポインタ
+;; argp: 引数ポインタ
 ;; c: 現在のクロージャ
 ;; s: スタックポインタ
 ;; code: コード
 ;;
-(define (VM a pc f c s code)
-  ;(display-register a x f c s)
+(define (VM a pc f argp c s code)
+  ;(display-register a pc f argp c s)
   ;(display code)
   ;(newline)
   ;(display "pc=")
@@ -279,71 +281,77 @@
   ;(display "a=")
   ;(display a)
   ;(display "code=")
-  ;(display code)
+  ;(if (= pc 18)
+  ;  (display code)
+  ;  '())
   ;(newline)
+  ;(display *stack*)
+  ;(newline)
+  ;(display "f=") (display f) (newline)
+  ;(display "argp=") (display argp) (newline)
   (record-case ;(cdr (code-index code pc)) ; 先頭にはアドレスがある
                (let ([x (code-index code pc)])
                  (cdr x))
                [halt () a]
                [refer-local (n)
-                            (VM (index f n) (1+ pc) f c s code)]
+                            (VM (index argp n) (1+ pc) f argp c s code)]
                [refer-free (n)
-                           (VM (index-closure c n) (1+ pc) f c s code)]
+                           (VM (index-closure c n) (1+ pc) f argp c s code)]
                [refer-global (n)
-                           (VM (refer-global n) (1+ pc) f c s code)]
+                           (VM (refer-global n) (1+ pc) f argp c s code)]
                [indirect ()
-                         (VM (unbox a) (1+ pc) f c s code)]
+                         (VM (unbox a) (1+ pc) f argp c s code)]
                [constant (obj)
-                         (VM obj (1+ pc) f c s code)]
+                         (VM obj (1+ pc) f argp c s code)]
                [close (n bodyadr ebodyadr)
-                      (VM (closure bodyadr ebodyadr n s) (1+ pc) f c (- s n) code)]
+                      (VM (closure bodyadr ebodyadr n s) (1+ pc) f argp c (- s n) code)]
                [box (n)
                     (index-set! s n (box (index s n)))
-                    (VM a (1+ pc) f c s code)]
+                    (VM a (1+ pc) f argp c s code)]
                [test (elsadr)
-                     (VM a (if a (1+ pc) elsadr) f c s code)]
+                     (VM a (if a (1+ pc) elsadr) f argp c s code)]
                [plus ()
-                     (let ([a (index f 0)]
-                           [b (index f 1)])
-                       (VM (+ a b) (1+ pc) f c s code))]
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (+ a b) (1+ pc) f argp c s code))]
                [minus ()
-                     (let ([a (index f 0)]
-                           [b (index f 1)])
-                       (VM (- a b) (1+ pc) f c s code))]
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (- a b) (1+ pc) f argp c s code))]
                [equal ()
-                     (let ([a (index f 0)]
-                           [b (index f 1)])
-                       (VM (= a b) (1+ pc) f c s code))]
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (= a b) (1+ pc) f argp c s code))]
                [assign-local (n)
-                             (set-box! (index f n) a)
-                             (VM a (1+ pc) f c s code)]
+                             (set-box! (index argp n) a)
+                             (VM a (1+ pc) f argp c s code)]
                [assign-free (n)
                             (set-box! (index-closure c n) a)
-                            (VM a (1+ pc) f c s code)]
+                            (VM a (1+ pc) f argp c s code)]
                [assign-global (n)
                               (assign-global n a code)
-                              (VM a (1+ pc) f c s code)]
+                              (VM a (1+ pc) f argp c s code)]
                [define (n)
                               (define-global n a code)
-                              (VM a (1+ pc) f c s code)]
+                              (VM a (1+ pc) f argp c s code)]
                [conti ()
-                      (set! a  (closure 
+                      (set! a  (closure
                                  (+ 1 (last-address code))
                                  (+ 3 (last-address code))
                                  0
                                  s))
                       (set! code (continuation s code))
-                      (VM a (1+ pc) f c s code)]
+                      (VM a (1+ pc) f argp c s code)]
                [nuate (stack)
-                      (VM a (1+ pc) f c (restore-stack stack) code)]
+                      (VM a (1+ pc) f argp c (restore-stack stack) code)]
                [frame (retadr)
-                      (VM a (1+ pc) f c (push retadr (push f (push c s))) code)]
+                      (VM a (1+ pc) f argp c (push f (push argp (push c (push retadr s)))) code)]
                [argument ()
-                         (VM a (1+ pc) f c (push a s) code)]
+                         (VM a (1+ pc) f argp c (push a s) code)]
                [shift (n m)
-                      (VM a (1+ pc) f c (shift-args n m s) code)]
+                      (VM a (1+ pc) f (- argp m) c (shift-args n m s) code)]
                [apply ()
-                      (VM a (closure-body a) s a s code)]
+                      (VM a (closure-body a) (+ argp 4) s a s code)]
                [return (n)
                        (let1 s (- s n)
-                             (VM a (index s 0) (index s 1) (index s 2) (- s 3) code))]))
+                             (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 4) code))]))
