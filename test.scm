@@ -68,6 +68,6 @@
 (test* "#29" 10             (evaluate '(define x 10)))
 
 (test* "#30" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
-;(test* "#31" '#(19 21)      (evaluate 'x))
+(test* "#31" '#(1055 1057)  (evaluate 'x))
 
 (test-end)
