@@ -30,3 +30,5 @@
 ;(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
 ;(debug 'x)
 ;(debug '(+ 1 2))
+;(debug '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20))
+;(debug 'x)

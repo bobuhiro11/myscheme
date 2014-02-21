@@ -120,7 +120,10 @@
 
 ;; (assign-global 'x 800)
 (define (assign-global k v rom-code)
-  (set-cdr! (assq k *global*) v))
+  (set-cdr! (assq k *global*) 
+            (if (vector? v)
+              (save-closure-body v rom-code)   ; closureの場合は本体の命令コードをramに保存する．
+              v)))
 
 (define (define-global k v rom-code)
   (set! *global*
@@ -349,7 +352,7 @@
                [argument ()
                          (VM a (1+ pc) f argp c (push a s) code)]
                [shift (n m)
-                      (VM a (1+ pc) f (- argp m) c (shift-args n m s) code)]
+                      (VM a (1+ pc) f (+ argp (- n m)) c (shift-args n m s) code)]
                [apply ()
                       (VM a (closure-body a) (+ argp 4) s a s code)]
                [return (n)

@@ -59,7 +59,7 @@
 (test* "#27" '() (evaluate '(define-macro let
                                                (lambda (binds . bodies)
                                                  (cons (append (list 'lambda
-                                                                     (map (lambda (x) (car x)) 
+                                                                     (map (lambda (x) (car x))
                                                                           binds))
                                                                bodies)
                                                        (map (lambda (x) (cadr x)) binds))))))
@@ -68,6 +68,6 @@
 (test* "#29" 10             (evaluate '(define x 10)))
 
 (test* "#30" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
-(test* "#31" '#(19 21)      (evaluate 'x))
+;(test* "#31" '#(19 21)      (evaluate 'x))
 
 (test-end)
