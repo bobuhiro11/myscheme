@@ -3,6 +3,8 @@
 (load "./compile.scm")
 (load "./linear.scm")
 (load "./vm.scm")
+(use slib)
+(require 'trace)
 
 (define evaluate
   (lambda (x)
@@ -41,4 +43,8 @@
          (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
          0))))
 
-(linear-compile '(+ 1 2))
+;(linear-compile '(define sum
+;                   (lambda (n s)
+;                     (if (= n 0)
+;                       s
+;                       (sum (- n 1) (+ s n))))))

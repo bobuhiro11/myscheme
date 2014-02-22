@@ -20,22 +20,22 @@
 (test* "#10" 100           (evaluate '(set! y 100) ))
 (test* "#11" 100           (evaluate '((lambda (x) y) 10)))
 (test* "#12" 100           (evaluate 'y))
-(test* "#13" '#(1004)      (evaluate '+))
+(test* "#13" '#(1006)      (evaluate '+))
 (test* "#14" 3             (evaluate '(+ 1 2)))
 
-(test* "#15" '#(1006 1012) (evaluate '(define func2
+(test* "#15" '#(1009 1021) (evaluate '(define func2
                                              (lambda (x y)
                                                (+ x y)))))
 
 (test* "#16"  12           (evaluate '(func2 3 9)))
 
-(test* "#17" '#(1013 1025) (evaluate '(define func
+(test* "#17" '#(1022 1044) (evaluate '(define func
                                             (lambda (x y)
                                               (+ x (+ y 2) )))))
 (test* "#18" 8             (evaluate '(func 1  5)))
 (test* "#19" #f            (evaluate '(= 1 2)))
 
-(test* "#20" #(1026 1054)  (evaluate '(define sum
+(test* "#20" #(1045 1095)  (evaluate '(define sum
                                              (lambda (n s)
                                                (if (= n 0)
                                                  s
@@ -68,7 +68,7 @@
 (test* "#29" 10             (evaluate '(define x 10)))
 
 (test* "#30" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
-(test* "#31" '#(1055 1057)  (evaluate 'x))
+(test* "#31" '#(1096 1101)  (evaluate 'x))
 (test* "#32" 25             (evaluate '(x 5)))
 
 (test-end)

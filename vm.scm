@@ -109,8 +109,8 @@
   (list '(x . 123)
         '(y . 256)
         '(= . #(1000))
-        '(- . #(1002))
-        '(+ . #(1004))))
+        '(- . #(1003))
+        '(+ . #(1006))))
 
 ;; (refer-global 'x)
 ;;
@@ -137,6 +137,18 @@
   (lambda (x)
     (+ x 1)))
 
+(define 2+
+  (lambda (x)
+    (+ x 2)))
+
+(define 3+
+  (lambda (x)
+    (+ x 3)))
+
+(define 4+
+  (lambda (x)
+    (+ x 4)))
+
 (define 1-
   (lambda (x)
     (- x 1)))
@@ -154,11 +166,15 @@
 (define *ram-code*
   (list 
     '(1000 equal)
-    '(1001 return 2)
-    '(1002 minus)
-    '(1003 return 2)
-    '(1004 plus)
-    '(1005 return 2)))
+    '(1001 return)
+    '(1002 2)
+    '(1003 minus)
+    '(1004 return)
+    '(1005 2)
+    '(1006 plus)
+    '(1007 return)
+    '(1008 2)))
+
 
 ;; アドレスからコードを得る
 (define code-index
@@ -167,6 +183,11 @@
       (if code
         code
         (lst-index *ram-code* i)))))
+
+;; code-indexの2番めの要素を取り出す
+(define code-index-content
+  (lambda (rom-code i)
+    (cadr (code-index rom-code i))))
 
 ;; 最後のアドレス
 (define last-address
@@ -199,29 +220,29 @@
                  (set! *ram-code*
                    (cons (record-case (cdr x)
                                       ;本体がRAMに存在していない場合は変換が必要
-                                      [close (n bodyadr ebodyadr)
-                                             (if (> bodyadr 1000)
-                                               (cons (+ i adr-diff)
-                                                     (cdr x))
-                                               (cons (+ i adr-diff)
-                                                     (list 'close
-                                                           n
-                                                           (+ bodyadr adr-diff)
-                                                           (+ ebodyadr adr-diff))))]
-                                      [test (elsadr)
-                                            (if (> elsadr 1000)
-                                               (cons (+ i adr-diff)
-                                                     (cdr x))
-                                               (cons (+ i adr-diff)
-                                                     (list 'test
-                                                           (+ elsadr adr-diff))))]
-                                      [frame (retadr)
-                                             (if (> retadr 1000)
-                                               (cons (+ i adr-diff)
-                                                     (cdr x))
-                                               (cons (+ i adr-diff)
-                                                     (list 'frame
-                                                           (+ retadr adr-diff))))]
+                                      [close ()
+                                             (let ([bodyadr  (cadr (lst-index rom-code (+ i 2)))]
+                                                   [ebodyadr (cadr (lst-index rom-code (+ i 3)))])
+                                               (when (< bodyadr 1000)
+                                                 (set! rom-code
+                                                   (cons (list (+ i 2) (+ bodyadr adr-diff))
+                                                         (cons (list (+ i 3) (+ ebodyadr adr-diff))
+                                                               rom-code))))
+                                               (cons (+ i adr-diff) (cdr x)))]
+                                      [test ()
+                                             (let ([elsadr  (cadr (lst-index rom-code (+ i 1)))])
+                                               (when (< elsadr 1000)
+                                                 (set! rom-code
+                                                   (cons (list (+ i 1) (+ elsadr adr-diff))
+                                                         rom-code)))
+                                               (cons (+ i adr-diff) (cdr x)))]
+                                      [frame ()
+                                             (let ([retadr  (cadr (lst-index rom-code (+ i 1)))])
+                                               (when (< retadr 1000)
+                                                 (set! rom-code
+                                                   (cons (list (+ i 1) (+ retadr adr-diff))
+                                                         rom-code)))
+                                               (cons (+ i adr-diff) (cdr x)))]
                                       [else
                                         (cons (+ i adr-diff) (cdr x))])
                          *ram-code*))
@@ -275,17 +296,17 @@
            [newm (+ m (- newn n))])
       (vector-set! v 0 newn)
       (vector-set! v 1 newm)
-      (let ([ins (code-index *ram-code* (1+ newn))])
+      (let ([ins (code-index *ram-code* (2+ newn))]
+            [ins2 (code-index *ram-code* (3+ newn))])
         ; もし対象のクロージャが継続であれば，スタックフレーム内に存在する
         ; 戻りアドレスについても，考慮する必要がある．
         (when (eq? (cadr ins) 'nuate)
-          (cons (list (1+ newn)
-                      'nuate
-                      (addoffset (caddr ins)
-                                 (- (move-ram (retadr-from-stack (caddr ins))
+          (cons (list (3+ newn)
+                      (addoffset (cadr ins2)
+                                 (- (move-ram (retadr-from-stack (cadr ins2))
                                               (last-address rom-code)
                                               rom-code)
-                                    (retadr-from-stack (caddr ins)))))
+                                    (retadr-from-stack (cadr ins2)))))
                 *ram-code*)))
       v)))
 
@@ -304,9 +325,12 @@
 (define continuation
   (lambda (s rom-code)
     (let ([start-adr (1+ (last-address rom-code))])
-      (append (list (list start-adr        'refer-local 0)
-                    (list (+ start-adr 1)  'nuate (save-stack s))
-                    (list (+ start-adr 2)  'return 0))
+      (append (list (list start-adr        'refer-local)
+                    (list (+ start-adr 1)  0)
+                    (list (+ start-adr 2)  'nuate)
+                    (list (+ start-adr 3)  (save-stack s))
+                    (list (+ start-adr 4)  'return)
+                    (list (+ start-adr 5)  0))
               rom-code))))
 
 ;;
@@ -320,6 +344,9 @@
 ;;
 (define (VM a pc f argp c s code)
   ;(display-register a pc f argp c s)
+  ;(display "ram=")
+  ;(display *ram-code*)
+  ;(newline)
   ;(display code)
   ;(newline)
   ;(display "pc=")
@@ -341,23 +368,32 @@
                (let ([x (code-index code pc)])
                  (cdr x))
                [halt () a]
-               [refer-local (n)
-                            (VM (index argp n) (1+ pc) f argp c s code)]
-               [refer-free (n)
-                           (VM (index-closure c n) (1+ pc) f argp c s code)]
-               [refer-global (n)
-                           (VM (refer-global n) (1+ pc) f argp c s code)]
+               [refer-local ()
+                            (let1 n (code-index-content code (1+ pc))
+                                  (VM (index argp n) (2+ pc) f argp c s code))]
+               [refer-free ()
+                           (let1 n (code-index-content code (1+ pc))
+                                 (VM (index-closure c n) (2+ pc) f argp c s code))]
+               [refer-global ()
+                             (let1 n (code-index-content code (1+ pc))
+                                   (VM (refer-global n) (2+ pc) f argp c s code))]
                [indirect ()
                          (VM (unbox a) (1+ pc) f argp c s code)]
-               [constant (obj)
-                         (VM obj (1+ pc) f argp c s code)]
-               [close (n bodyadr ebodyadr)
-                      (VM (closure bodyadr ebodyadr n s) (1+ pc) f argp c (- s n) code)]
-               [box (n)
-                    (index-set! s n (box (index s n)))
-                    (VM a (1+ pc) f argp c s code)]
-               [test (elsadr)
-                     (VM a (if a (1+ pc) elsadr) f argp c s code)]
+               [constant ()
+                         (let1 obj (code-index-content code (1+ pc))
+                               (VM obj (2+ pc) f argp c s code))]
+               [close ()
+                      (let ([n        (code-index-content code (1+ pc))]
+                            [bodyadr  (code-index-content code (2+ pc))]
+                            [ebodyadr (code-index-content code (3+ pc))])
+                        (VM (closure bodyadr ebodyadr n s) (4+ pc) f argp c (- s n) code))]
+               [box ()
+                    (let1 n (code-index-content code (1+ pc))
+                          (index-set! s n (box (index s n)))
+                          (VM a (2+ pc) f argp c s code))]
+               [test ()
+                     (let1 elsadr (code-index-content code (1+ pc))
+                           (VM a (if a (2+ pc) elsadr) f argp c s code))]
                [plus ()
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
@@ -370,37 +406,53 @@
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
                        (VM (= a b) (1+ pc) f argp c s code))]
-               [assign-local (n)
-                             (set-box! (index argp n) a)
-                             (VM a (1+ pc) f argp c s code)]
-               [assign-free (n)
-                            (set-box! (index-closure c n) a)
-                            (VM a (1+ pc) f argp c s code)]
-               [assign-global (n)
-                              (assign-global n a code)
-                              (VM a (1+ pc) f argp c s code)]
-               [define (n)
-                              (define-global n a code)
-                              (VM a (1+ pc) f argp c s code)]
+               [assign-local ()
+                             (let1 n (code-index-content code (1+ pc))
+                                   (set-box! (index argp n) a)
+                                   (VM a (2+ pc) f argp c s code))]
+               [assign-free ()
+                            (let1 n (code-index-content code (1+ pc))
+                                  (set-box! (index-closure c n) a)
+                                  (VM a (2+ pc) f argp c s code))]
+               [assign-global ()
+                              (let1 n (code-index-content code (1+ pc))
+                                    (assign-global n a code)
+                                    (VM a (2+ pc) f argp c s code))]
+               [define ()
+                 (let1 n (code-index-content code (1+ pc))
+                       (define-global n a code)
+                       (VM a (2+ pc) f argp c s code))]
                [conti ()
                       (set! a  (closure
-                                 (+ 1 (last-address code))
-                                 (+ 3 (last-address code))
+                                 (+ 1 (last-address code)) ; ここはcontinuation()に依存する
+                                 (+ 6 (last-address code))
                                  0
                                  s))
                       (set! code (continuation s code))
                       (VM a (1+ pc) f argp c s code)]
-               [nuate (stack)
-                      (VM a (1+ pc) f argp c (restore-stack stack) code)]
-               [frame (retadr)
-                      (VM a (1+ pc) f argp c
-                          (push f (push argp (push c (push retadr (push 'end-of-frame s))))) code)]
+               [nuate ()
+                      (let1 stack (code-index-content code (1+ pc))
+                            (VM a (2+ pc) f argp c (restore-stack stack) code))]
+               [frame ()
+                      (let1 retadr (code-index-content code (1+ pc))
+                            (VM a (2+ pc) f argp c
+                                (push f (push argp (push c (push retadr (push 'end-of-frame s)))))
+                                code))]
                [argument ()
                          (VM a (1+ pc) f argp c (push a s) code)]
-               [shift (n m)
-                      (VM a (1+ pc) f (+ argp (- n m)) c (shift-args n m s) code)]
-               [apply (n)
-                      (VM a (closure-body a) (- s n) s a s code)]
-               [return (n)
-                       (let1 s (- s n)
-                             (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 5) code))]))
+               [shift ()
+                      (let ([n (code-index-content code (1+ pc))]
+                            [m (code-index-content code (2+ pc))])
+                        (VM a (3+ pc) f (+ argp (- n m)) c (shift-args n m s) code))]
+               [apply ()
+                      (let1 n (code-index-content code (1+ pc))
+                            (VM a (closure-body a) (- s n) s a s code))]
+               [return ()
+                       (let* ([n (code-index-content code (1+ pc))]
+                              [s (- s n)])
+                         (VM a (index s 3) (index s 0) (index s 1) (index s 2) (- s 5) code))]
+               [else ()
+                     (display 'unknown-instruction)
+                     (newline)
+                     (display 'pc=)
+                     (display pc)]))

@@ -4,42 +4,52 @@
 
 (load "./util.scm")
 
+
 (define 3imp->linear
   (lambda (code adr)
     (record-case code
                  [halt ()
                        (list (list adr 'halt))]
                  [refer-local (n x)
-                              (cons (list adr 'refer-local n)
-                                    (3imp->linear x (+ adr 1)))]
+                              (cons (list adr 'refer-local)
+                                    (cons (list (+ adr 1) n)
+                                          (3imp->linear x (+ adr 2))))]
                  [refer-free (n x)
-                              (cons (list adr 'refer-free n)
-                                    (3imp->linear x (+ adr 1)))]
+                              (cons (list adr 'refer-free)
+                                    (cons (list (+ adr 1) n)
+                                          (3imp->linear x (+ adr 2))))]
                  [refer-global (n x)
-                              (cons (list adr 'refer-global n)
-                                    (3imp->linear x (+ adr 1)))]
+                              (cons (list adr 'refer-global)
+                                    (cons (list (+ adr 1) n)
+                                          (3imp->linear x (+ adr 2))))]
                  [indirect (x)
                               (cons (list adr 'indirect)
                                     (3imp->linear x (+ adr 1)))]
                  [constant (obj x)
-                              (cons (list adr 'constant obj)
-                                    (3imp->linear x (+ adr 1)))]
+                              (cons (list adr 'constant)
+                                    (cons (list (+ adr 1) obj)
+                                          (3imp->linear x (+ adr 2))))]
                  [close (n body x)
-                        (let* ([nextc (3imp->linear x (+ adr 1))]
-                               [bodyadr (+ 1 adr (length nextc))]
+                        (let* ([nextc (3imp->linear x (+ adr 4))]
+                               [bodyadr (+ 4 adr (length nextc))]
                                [bodyc (3imp->linear body bodyadr)]
                                [ebodyadr (- (+ bodyadr (length bodyc)) 1)])
-                          (cons (list adr 'close n bodyadr ebodyadr)
-                                (append nextc bodyc)))]
+                          (cons (list adr 'close)
+                                (cons (list (+ adr 1) n)
+                                      (cons (list (+ adr 2) bodyadr)
+                                            (cons (list (+ adr 3) ebodyadr)
+                                                  (append nextc bodyc))))))]
                  [box (n x)
-                              (cons (list adr 'box n)
-                                    (3imp->linear x (+ adr 1)))]
+                              (cons (list adr 'box)
+                                    (cons (list (+ adr 1) n)
+                                          (3imp->linear x (+ adr 2))))]
                  [test (then else)
-                       (let* ([thenc (3imp->linear then (+ adr 1))]
-                              [elsadr (+ 1 adr (length thenc))]
+                       (let* ([thenc (3imp->linear then (+ adr 2))]
+                              [elsadr (+ 2 adr (length thenc))]
                               [elsec (3imp->linear else elsadr)])
-                         (cons (list adr 'test elsadr)
-                               (append thenc elsec)))]
+                         (cons (list adr 'test)
+                               (cons (list (+ adr 1) elsadr)
+                                     (append thenc elsec))))]
                  [plus (x)
                        (cons (list adr 'plus)
                              (3imp->linear x (+ adr 1)))]
@@ -50,39 +60,49 @@
                        (cons (list adr 'equal)
                              (3imp->linear x (+ adr 1)))]
                  [assign-local (n x)
-                       (cons (list adr 'assign-local n)
-                             (3imp->linear x (+ adr 1)))]
+                               (cons (list adr 'assign-local)
+                                     (cons (list (+ adr 1) n)
+                                           (3imp->linear x (+ adr 2))))]
                  [assign-free (n x)
-                       (cons (list adr 'assign-free n)
-                             (3imp->linear x (+ adr 1)))]
+                               (cons (list adr 'assign-free)
+                                     (cons (list (+ adr 1) n)
+                                           (3imp->linear x (+ adr 2))))]
                  [assign-global (n x)
-                       (cons (list adr 'assign-global n)
-                             (3imp->linear x (+ adr 1)))]
+                               (cons (list adr 'assign-global)
+                                     (cons (list (+ adr 1) n)
+                                           (3imp->linear x (+ adr 2))))]
                  [define (n x)
-                       (cons (list adr 'define n)
-                             (3imp->linear x (+ adr 1)))]
+                               (cons (list adr 'define)
+                                     (cons (list (+ adr 1) n)
+                                           (3imp->linear x (+ adr 2))))]
                  [conti (x)
                        (cons (list adr 'conti )
                              (3imp->linear x (+ adr 1)))]
                  [nuate (stack x)
-                       (cons (list adr 'nuate stack)
-                             (3imp->linear x (+ adr 1)))]
+                        (cons (list adr 'nuate)
+                              (cons (list (+ adr 1) stack)
+                                    (3imp->linear x (+ adr 2))))]
                  [frame (ret x)
-                        (let* ([xcode (3imp->linear x (+ adr 1))]
-                               [retadr (+ 1 adr (length xcode))]
+                        (let* ([xcode (3imp->linear x (+ adr 2))]
+                               [retadr (+ 2 adr (length xcode))]
                                [retcode (3imp->linear ret retadr)])
-                          (cons (list adr 'frame retadr)
-                                (append xcode retcode)))]
+                          (cons (list adr 'frame)
+                                (cons (list (+ adr 1) retadr)
+                                      (append xcode retcode))))]
                  [argument (x)
                        (cons (list adr 'argument)
                              (3imp->linear x (+ adr 1)))]
                  [shift (n m x)
-                       (cons (list adr 'shift n m)
-                             (3imp->linear x (+ adr 1)))]
+                       (cons (list adr 'shift)
+                             (cons (list (+ adr 1) n)
+                                   (cons (list (+ adr 2) m)
+                                         (3imp->linear x (+ adr 3)))))]
                  [apply (n)
-                       (list (list adr 'apply n))]
+                       (list (list adr 'apply)
+                             (list (+ adr 1) n))]
                  [return (n)
-                         (list (list adr 'return n))])))
+                         (list (list adr 'return)
+                               (list (+ adr 1) n))])))
 
 ;; 3imp->linearの結果を整形・出力
 (define display-linearcode
