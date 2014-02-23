@@ -1,12 +1,10 @@
-#!/usr/bin/gosh
+#!/usr/bin/env gosh
 
 (load "./util.scm")
 (load "./macro.scm")
 (load "./compile.scm")
 (load "./linear.scm")
 (load "./vm.scm")
-(use slib)
-(require 'trace)
 
 (define evaluate
   (lambda (x)
@@ -35,11 +33,8 @@
 (define linear-compile
   (lambda (code)
     (map (lambda (x)
-           (recur next ([x x])
-                  (unless (null? x)
-                    (display (car x))
-                    (display " ")
-                    (next (cdr x))))
+           (display (format #f "~3d  " (car x)))
+           (display (cadr x))
            (newline))
         (3imp->linear
          (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
