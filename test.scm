@@ -65,10 +65,11 @@
                                                        (map (lambda (x) (cadr x)) binds))))))
 
 (test* "#28" 11             (evaluate '(let ((a 10)) (+ a 1))))
-(test* "#29" 10             (evaluate '(define x 10)))
+(test* "#29" 3              (evaluate '(let ([func (lambda (x y) (+ x y))]) (func 1 2))))
+(test* "#31" 10             (evaluate '(define x 10)))
 
-(test* "#30" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
-(test* "#31" '#(1096 1101)  (evaluate 'x))
-(test* "#32" 25             (evaluate '(x 5)))
+(test* "#31" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
+(test* "#32" '#(1096 1101)  (evaluate 'x))
+(test* "#33" 25             (evaluate '(x 5)))
 
 (test-end)
