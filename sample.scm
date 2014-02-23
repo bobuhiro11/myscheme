@@ -299,3 +299,25 @@
                        (apply)))))
     0))
 (newline)
+
+
+(define-macro letrec
+              (lambda (args . bodies)
+                (let ([vars (map (lambda (x) (car x)) args)]
+                      [vals (map (lambda (x) (cadr x)) args)])
+                  (append (list (append (list 'lambda vars)
+                                        (map (lambda (x) (list 'set! (car x) (cadr x))) args)
+                                        bodies
+                                        ))
+                          (map (lambda (x) 0) args)))))
+
+(display (macroexpand '(letrec ([a 100]
+                                [b 200])
+                         a)))
+(define (fact-letrec n)
+  (letrec ((iter (lambda (n1 p)
+                   (if (= n1 1)
+                     p
+                     (let ((m (- n1 1)))
+                       (iter m (* p m)))))))     ; *
+    (iter n n)))

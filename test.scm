@@ -71,5 +71,18 @@
 (test* "#31" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
 (test* "#32" '#(1096 1101)  (evaluate 'x))
 (test* "#33" 25             (evaluate '(x 5)))
-
+(test* "#34" '()            (evaluate '(define-macro letrec
+                                                     (lambda (args . bodies)
+                                                       (let ([vars (map (lambda (x) (car x)) args)]
+                                                             [vals (map (lambda (x) (cadr x)) args)])
+                                                         (append (list (append (list 'lambda vars)
+                                                                               (map (lambda (x) (list 'set! (car x) (cadr x))) args)
+                                                                               bodies
+                                                                               ))
+                                                                 (map (lambda (x) 0) args)))))))
+(test* "#35" 55             (evaluate '(letrec ([s (lambda (x)
+                                                     (if (= x 0)
+                                                       0
+                                                       (+ x (s (- x 1)))))])
+                                         (s 10))))
 (test-end)

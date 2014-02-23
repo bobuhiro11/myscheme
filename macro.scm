@@ -8,7 +8,7 @@
 
 ;; (get-traditional-macro 'double)
 ;;
-;; => (double . (lambda (list '* x x)))
+;; => (double . (lambda (x) (list '* x x)))
 (define get-traditional-macro
   (lambda (x)
     (assq x *traditional-macros*)))

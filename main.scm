@@ -43,8 +43,8 @@
          (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
          0))))
 
-;(linear-compile '(define sum
-;                   (lambda (n s)
-;                     (if (= n 0)
-;                       s
-;                       (sum (- n 1) (+ s n))))))
+(linear-compile '(letrec ([s (lambda (x)
+                               (if (= x 0)
+                                 0
+                                 (+ x (s (- x 1)))))])
+                   (s 10)))
