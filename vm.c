@@ -91,6 +91,20 @@ get_code()
 	}
 }
 
+void
+init_code()
+{
+	code[1000] = CODE_EQUAL;
+	code[1001] = CODE_RETURN;
+	code[1002] = 2<<2;
+	code[1003] = CODE_MINUS;
+	code[1004] = CODE_RETURN;
+	code[1005] = 2<<2;
+	code[1006] = CODE_PLUS;
+	code[1007] = CODE_RETURN;
+	code[1008] = 2<<2;
+}
+
 /*
  * dump code
  */
@@ -262,10 +276,24 @@ exec_code()
 					pc = val;
 				break;
 			case CODE_PLUS:
+				tmp = stack[s-1] >> 2;
+				tmp2 = stack[s-2] >> 2;
+				tmp = tmp + tmp2;
+				tmp = tmp << 2;
+				a = tmp;
 				break;
 			case CODE_MINUS:
+				tmp = stack[s-1] >> 2;
+				tmp2 = stack[s-2] >> 2;
+				tmp = tmp - tmp2;
+				tmp = tmp << 2;
+				a = tmp;
 				break;
 			case CODE_EQUAL:
+				if(stack[s-1] == stack[s-2])
+					a = VM_DATA_TRUE;
+				else
+					a = VM_DATA_FALSE;
 				break;
 			case CODE_ASSIGN_LOCAL:
 				break;
@@ -322,6 +350,15 @@ ht_init(struct hashtable *table)
 	ht_insert(table, "x", d);
 	d = 256 << 2;
 	ht_insert(table, "y", d);
+
+	d = create_closure(0, 1000, 1002,0);
+	ht_insert(table, "=", d);
+
+	d = create_closure(0, 1003, 1005,0);
+	ht_insert(table, "-", d);
+
+	d = create_closure(0, 1006, 1008,0);
+	ht_insert(table, "+", d);
 }
 
 int
@@ -332,6 +369,9 @@ main(int argc, char **argv)
 	global_table = ht_create();
 	ht_init(global_table);
 
+	ht_dump(global_table);
+
+	init_code();
 	get_code();
 	dump_code(10);
 	rc = exec_code();
