@@ -1,61 +1,4 @@
-#include<stdio.h>
-#include<stdint.h>
-#include<string.h>
-#include<stdlib.h>
-
-#define CODE_MAX 2048
-#define STACK_MAX 64
-
-#define CODE_HALT 		0xFF000001	/* for vm_code */
-#define CODE_REFER_LOCAL 	0xFF000002
-#define CODE_REFER_FREE		0xFF000003
-#define CODE_REFER_GLOBAL	0xFF000004
-#define CODE_INDIRECT    	0xFF000005
-#define CODE_CONSTANT    	0xFF000006
-#define CODE_CLOSE       	0xFF000007
-#define CODE_BOX         	0xFF000008
-#define CODE_TEST        	0xFF000009
-#define CODE_PLUS        	0xFF00000a
-#define CODE_MINUS       	0xFF00000b
-#define CODE_EQUAL       	0xFF00000c
-#define CODE_ASSIGN_LOCAL	0xFF00000d
-#define CODE_ASSIGN_FREE 	0xFF00000e
-#define CODE_ASSIGN_GLOBAL	0xFF00000f
-#define CODE_DEFINE      	0xFF000010
-#define CODE_CONTI       	0xFF000011
-#define CODE_NUATE       	0xFF000012
-#define CODE_FRAME       	0xFF000013
-#define CODE_ARGUMENT    	0xFF000014
-#define CODE_SHIFT       	0xFF000015
-#define CODE_APPLY       	0xFF000016
-#define CODE_RETURN      	0xFF000017
-#define CODE_INVALID 		0xFFFFFFFF
-#define CODE_TRUE 		0x00000001
-#define CODE_FALSE 		0x00000009
-#define CODE_NIL 		0x0000000d
-
-#define VM_DATA_TRUE		0x01		/* for tag of vm_data */
-#define VM_DATA_FALSE		0x02
-#define VM_DATA_NIL		0x03
-#define VM_DATA_EOF		0x04
-#define VM_DATA_UNDEFINED	0x05
-#define VM_DATA_UNBOUND		0x06
-#define VM_DATA_STR		0x07
-#define VM_DATA_CLOSURE		0x08
-#define VM_DATA_INTEGER		0x09
-#define VM_DATA_END_OF_FRAME	0xFD
-
-typedef uint64_t vm_code;
-
-struct vm_data
-{
-	unsigned char tag;
-	union{
-		int integer;
-		char *str;
-		struct vm_data *closure;
-	} u;
-};
+#include "common.h"
 
 /*
  * opecode and operand
@@ -73,10 +16,12 @@ vm_code code[CODE_MAX];
 
 struct vm_data stack[STACK_MAX];
 
+struct hashtable *global_table;
+
 /*
  * translate code(string) to code(vm_code)
  */
-static vm_code get_vm_code(const char* s)
+vm_code get_vm_code(const char* s)
 {
 	vm_code rc = CODE_INVALID;
 	char *endp,*p;
@@ -185,7 +130,7 @@ void write_vm_data(struct vm_data data)
 }
 
 /*
- * dump code
+ * dump stack
  */
 void dump_stack(int max)
 {
@@ -382,12 +327,22 @@ int main(int argc, char **argv)
 {
 	struct vm_data rc;
 
+	/* debug*/
+	global_table = ht_create();
+	rc.tag = VM_DATA_INTEGER;
+	rc.u.integer = 199;
+	ht_insert(global_table, "hello", rc);
+	write_vm_data(ht_find(global_table,"hello"));
+	ht_dump(global_table);
+
 	get_code();
 	rc = exec_code();
 	write_vm_data(rc);
 	printf("\n");
 	dump_code(10);
 	dump_stack(10);
+
+	ht_destory(global_table);
 
 	return 0;
 }
