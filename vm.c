@@ -6,11 +6,11 @@
  * opecode:
  * 	CODE_*****
  * operand:
- * 	0x....00 -> number
- * 	0x..0001 -> true
- * 	0x..1001 -> false
- * 	0x..1101 -> nil
- * 	0x....11 -> string (char *)
+ * 	0x....00  number
+ * 	0x..0001  true
+ * 	0x..1001  false
+ * 	0x..1101  nil
+ * 	0x....11  string (char *)
  */
 vm_code code[CODE_MAX];
 
@@ -57,14 +57,12 @@ get_vm_code(const char* s)
 	else{
 		val = strtol(s, &endp, 10);
 		if(*endp == '\0'){ 			/* number */
-			val = val << 2;
-			rc = val;
+			rc = val << 2;
 		}else{					/* string */
 			p = (char*)malloc(strlen(s) + 1);
 			memset(p, strlen(s)+1, 0);
 			strcpy(p, s);
-			rc = (uint64_t)p;
-			rc = rc | 3;
+			rc = (uint64_t)p | 3;
 		}
 	}
 
@@ -128,26 +126,13 @@ write_vm_data(vm_data data)
 	int64_t rc;
 	struct vm_obj *p;
 
-	if(is_num(data)){
-		rc = data;
-		rc = rc>>2;
-		printf("%d",rc);
-	}else if (is_true(data)){
-		printf("#t");
-	}else if (is_false(data)){
-		printf("#f");
-	}else if (is_nil(data)){
-		printf("nil");
-	}else if (is_undefined(data)){
-		printf("undef");
-	}else if (is_end_of_frame(data)){
-		printf("end_of_frame");
-	}else if (is_obj(data)){
-		p = data - 3;
-		if(p->tag == VM_OBJ_CLOSURE)
-			printf("lamnbda<%d,%d>", closure_body(data),
-					closure_ebody(data));
-	}
+	if(is_num(data))		printf("%d",data>>2);
+	else if(is_true(data))		printf("#t");
+	else if(is_false(data))		printf("#f");
+	else if(is_nil(data))		printf("nil");
+	else if(is_undefined(data))	printf("undef");
+	else if(is_end_of_frame(data))	printf("end_of_frame");
+	else if(is_closure(data))	printf("lamnbda<%d,%d>",closure_body(data),closure_ebody(data));
 }
 
 /*
@@ -171,36 +156,18 @@ dump_stack(int max)
  * u.closure[0]: body start adr
  * u.closure[1]: body end   adr
  *
- * u.closure[i]: vm_data list
+ * u.closure[i]: vm_data list (i > 1)
  *
  */
 vm_data
 create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
 {
 	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
-	obj->tag = VM_OBJ_CLOSURE;
-	obj->u.closure = malloc(sizeof(vm_data) * (n+2));
-	obj->u.closure[0] = bodyadr << 2;
-	obj->u.closure[1] = ebodyadr << 2;
+	obj->tag 	   = VM_OBJ_CLOSURE;
+	obj->u.closure     = malloc(sizeof(vm_data) * (n+2));
+	obj->u.closure[0]  = bodyadr << 2;
+	obj->u.closure[1]  = ebodyadr << 2;
 	return ((uint64_t)obj) | 3;
-}
-
-/*
- * get closure start address
- */
-uint32_t
-closure_body(vm_data data)
-{
-	return ((struct vm_obj*)(data-3)) -> u.closure[0] >> 2;
-}
-
-/*
- * get closure end address
- */
-uint32_t
-closure_ebody(vm_data data)
-{
-	return ((struct vm_obj*)(data-3)) -> u.closure[1] >> 2;
 }
 
 /*
@@ -265,7 +232,7 @@ exec_code()
 				a = ((stack[s-1]>>2) + (stack[s-2]>>2)) << 2;
 				break;
 			case CODE_MINUS:
-				a = ((stack[s-1]>>2) + (stack[s-2]>>2)) << 2;
+				a = ((stack[s-1]>>2) - (stack[s-2]>>2)) << 2;
 				break;
 			case CODE_EQUAL:
 				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;

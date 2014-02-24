@@ -57,9 +57,10 @@
 #define is_nil(x) 		((x - VM_DATA_NIL) == 0)
 #define is_undefined(x) 	((x - VM_DATA_UNDEFINED) == 0)
 #define is_end_of_frame(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
-#define is_obj(x) 		((x & 0x3) == 0x3)
-#define is_closure(x) 		\
-	((x & 0x3) == 0x3 && ((struct vm_obj*)(x-3))->tag == VM_OBJ_CLOSURE)
+#define is_obj(x) 		((x&3) == 3)
+#define is_closure(x) 		((x&3) == 3 &&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
+#define closure_body(x)		(((struct vm_obj*)(x-3)) -> u.closure[0] >> 2)
+#define closure_ebody(x)	(((struct vm_obj*)(x-3)) -> u.closure[1] >> 2)
 
 /***************************************************
  * structure definition
@@ -90,8 +91,6 @@ void dump_code(int max);
 void write_vm_data(vm_data data);
 void dump_stack(int max);
 vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s);
-uint32_t closure_body(vm_data data);
-uint32_t closure_ebody(vm_data data);
 vm_data exec_code();
 
 vm_data ht_insert(struct hashtable *table, const char *key, vm_data data);
