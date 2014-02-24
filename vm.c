@@ -50,7 +50,7 @@ struct vm_data
 	union{
 		int integer;
 		char *str;
-		struct vm_data *closure; 
+		struct vm_data *closure;
 	} u;
 };
 
@@ -154,7 +154,6 @@ void dump_code(int max)
 void write_vm_data(struct vm_data data)
 {
 	int val;
-	
 	switch(data.tag){
 		case VM_DATA_INTEGER:
 			val = data.u.integer;
@@ -196,8 +195,8 @@ void dump_stack(int max)
 /*
  * create_closure
  *
- * u.closure[0]: body start adr, real number
- * u.closure[1]: body end   adr, real number 
+ * u.closure[0]: body start adr
+ * u.closure[1]: body end   adr
  *
  * u.closure[i]: vm_data list
  *
@@ -269,7 +268,7 @@ struct vm_data exec_code()
 			case CODE_INDIRECT:
 				break;
 			case CODE_CONSTANT:
-				if((code[pc] & 0x00000003) == 0x00000000){
+				if((code[pc] &3 ) == 0){
 					/* number */
 					val = code[pc++];
 					val = val >> 2;
