@@ -22,7 +22,7 @@ MurmurHash2(const void * key, int len, uint32_t seed)
 		k *= m;
 
 		h *= m;
-		h ^= k; 
+		h ^= k;
 		data += 4;
 		len -= 4;
 	}
@@ -43,7 +43,7 @@ MurmurHash2(const void * key, int len, uint32_t seed)
 
 /*
  * insert data to hash table.
- * return data if success, NULL otherwise.
+ * return data if success, VM_DATA_UNDEFINED otherwise.
  */
 struct vm_data
 ht_insert(struct hashtable *table, const char *key, struct vm_data data)
@@ -70,7 +70,7 @@ ht_insert(struct hashtable *table, const char *key, struct vm_data data)
 
 /*
  * find data from hash table.
- * return data if success, -1 otherwise.
+ * return data if success, VM_DATA_UNDEFINED otherwise.
  */
 struct vm_data
 ht_find(const struct hashtable *table, const char *key)
@@ -108,7 +108,7 @@ ht_dump(const struct hashtable *table)
 
 /*
  * create hash table.
- * return table if success, NULL otherwise.
+ * return table if success, VM_DATA_UNDEFINED otherwise.
  */
 struct hashtable*
 ht_create()

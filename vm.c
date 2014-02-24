@@ -21,7 +21,8 @@ struct hashtable *global_table;
 /*
  * translate code(string) to code(vm_code)
  */
-vm_code get_vm_code(const char* s)
+vm_code
+get_vm_code(const char* s)
 {
 	vm_code rc = CODE_INVALID;
 	char *endp,*p;
@@ -30,7 +31,6 @@ vm_code get_vm_code(const char* s)
 	if(!strcmp(s,"halt"))			rc =  CODE_HALT;
 	else if(!strcmp(s,"refer-local"))	rc =  CODE_REFER_LOCAL;
 	else if(!strcmp(s,"refer-free"))	rc =  CODE_REFER_FREE;
-	else if(!strcmp(s,"refer-global"))	rc =  CODE_REFER_GLOBAL;
 	else if(!strcmp(s,"refer-global"))	rc =  CODE_REFER_GLOBAL;
 	else if(!strcmp(s,"indirect"))		rc =  CODE_INDIRECT;
 	else if(!strcmp(s,"constant"))		rc =  CODE_CONSTANT;
@@ -61,8 +61,10 @@ vm_code get_vm_code(const char* s)
 			rc = val;
 		}else{					/* string */
 			p = (char*)malloc(strlen(s) + 1);
+			memset(p, strlen(s)+1, 0);
 			strcpy(p, s);
-			rc = (vm_code)p | 3;
+			rc = (uint64_t)p;
+			rc = rc | 3;
 		}
 	}
 
@@ -72,10 +74,12 @@ vm_code get_vm_code(const char* s)
 /*
  * get code from stdin and store in code
  */
-void get_code()
+void
+get_code()
 {
 	char row[256];
-	int i,c;
+	int i;
+	vm_code c;
 	char s[256];
 
 	while(fgets(row, sizeof(row), stdin) != NULL){
@@ -90,19 +94,21 @@ void get_code()
 /*
  * dump code
  */
-void dump_code(int max)
+void
+dump_code(int max)
 {
 	int i;
 	printf("**code**\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%d %016X\n", i, code[i]);
+		printf("%d %p\n", i, code[i]);
 	}
 }
 
 /*
  * write data to stdout
  */
-void write_vm_data(struct vm_data data)
+void
+write_vm_data(struct vm_data data)
 {
 	int val;
 	switch(data.tag){
@@ -132,7 +138,8 @@ void write_vm_data(struct vm_data data)
 /*
  * dump stack
  */
-void dump_stack(int max)
+void
+dump_stack(int max)
 {
 	int i;
 	printf("**stack**\n");
@@ -152,7 +159,8 @@ void dump_stack(int max)
  * u.closure[i]: vm_data list
  *
  */
-struct vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
+struct vm_data
+create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
 {
 	int i;
 	struct vm_data closure;
@@ -175,7 +183,8 @@ struct vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, u
 /*
  * get closure start addres
  */
-uint32_t closure_body(struct vm_data data)
+uint32_t
+closure_body(struct vm_data data)
 {
 	return data.u.closure[0].u.integer;
 }
@@ -184,9 +193,11 @@ uint32_t closure_body(struct vm_data data)
  * execute code stored in variable code
  * and return last accumlator value
  */
-struct vm_data exec_code()
+struct vm_data
+exec_code()
 {
 	int val,val2,val3;
+	char *str;
 
 	struct vm_data tmp, tmp2, tmp3;
 
@@ -219,6 +230,10 @@ struct vm_data exec_code()
 			case CODE_REFER_FREE:
 				break;
 			case CODE_REFER_GLOBAL:
+				str  = (char*)code[pc++];	/* string	*/
+				str  = str - 3;
+				printf("str = %s\n", str);
+				a = ht_find(global_table, str);
 				break;
 			case CODE_INDIRECT:
 				break;
@@ -323,23 +338,33 @@ struct vm_data exec_code()
 	}
 }
 
-int main(int argc, char **argv)
+/*
+ * insert initial data
+ */
+void
+ht_init(struct hashtable *table)
+{
+	struct vm_data d;
+	d.tag = VM_DATA_INTEGER;
+	d.u.integer = 123;
+	ht_insert(table, "x", d);
+	d.u.integer = 256;
+	ht_insert(table, "y", d);
+}
+
+int
+main(int argc, char **argv)
 {
 	struct vm_data rc;
 
-	/* debug*/
 	global_table = ht_create();
-	rc.tag = VM_DATA_INTEGER;
-	rc.u.integer = 199;
-	ht_insert(global_table, "hello", rc);
-	write_vm_data(ht_find(global_table,"hello"));
-	ht_dump(global_table);
+	ht_init(global_table);
 
 	get_code();
+	dump_code(10);
 	rc = exec_code();
 	write_vm_data(rc);
 	printf("\n");
-	dump_code(10);
 	dump_stack(10);
 
 	ht_destory(global_table);
