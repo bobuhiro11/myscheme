@@ -228,6 +228,8 @@ exec_code()
 			case CODE_REFER_FREE:
 				break;
 			case CODE_REFER_GLOBAL:
+				tmp  = code[pc++];	/* n		*/
+				a = ht_find(global_table, tmp-3);
 				break;
 			case CODE_INDIRECT:
 				break;
@@ -315,12 +317,11 @@ exec_code()
 void
 ht_init(struct hashtable *table)
 {
-	//vm_data d;
-	//d.tag = VM_DATA_INTEGER;
-	//d.u.integer = 123;
-	//ht_insert(table, "x", d);
-	//d.u.integer = 256;
-	//ht_insert(table, "y", d);
+	vm_data d;
+	d = 123 << 2;
+	ht_insert(table, "x", d);
+	d = 256 << 2;
+	ht_insert(table, "y", d);
 }
 
 int
