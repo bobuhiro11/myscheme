@@ -30,6 +30,9 @@
 #define CODE_APPLY       	0xFF000016
 #define CODE_RETURN      	0xFF000017
 #define CODE_INVALID 		0xFFFFFFFF
+#define CODE_TRUE 		0x00000001
+#define CODE_FALSE 		0x00000009
+#define CODE_NIL 		0x0000000d
 
 #define VM_DATA_TRUE		0x01		/* for tag of vm_data */
 #define VM_DATA_FALSE		0x02
@@ -63,7 +66,7 @@ struct vm_data
  * 	0x....00 -> number
  * 	0x..0001 -> true
  * 	0x..1001 -> false
- * 	0x..1101 -> false
+ * 	0x..1101 -> nil
  * 	0x....11 -> string (char *)
  */
 vm_code code[CODE_MAX];
@@ -103,9 +106,9 @@ static vm_code get_vm_code(const char* s)
 	else if(!strcmp(s,"shift"))		rc =  CODE_SHIFT;
 	else if(!strcmp(s,"apply"))		rc =  CODE_APPLY;
 	else if(!strcmp(s,"return"))		rc =  CODE_RETURN;
-	else if(!strcmp(s,"#t"))		rc =  0x00000001;
-	else if(!strcmp(s,"#f"))		rc =  0x00000009;
-	else if(!strcmp(s,"nil"))		rc =  0x0000000d;
+	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
+	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
+	else if(!strcmp(s,"nil"))		rc =  CODE_NIL;
 	else{
 		val = strtol(s, &endp, 10);
 		if(*endp == '\0'){ 			/* number */
@@ -281,13 +284,13 @@ struct vm_data exec_code()
 					val = val >> 2;
 					a.tag = VM_DATA_INTEGER;
 					a.u.integer = val;
-				}else if(code[pc] == 0x00000001){
+				}else if(code[pc] == CODE_TRUE){
 					a.tag = VM_DATA_TRUE;
 					pc++;
-				}else if(code[pc]  == 0x00000009){
+				}else if(code[pc]  == CODE_FALSE){
 					a.tag = VM_DATA_FALSE;
 					pc++;
-				}else if(code[pc] == 0x0000000d){
+				}else if(code[pc] == CODE_NIL){
 					a.tag = VM_DATA_NIL;
 					pc++;
 				}else{
