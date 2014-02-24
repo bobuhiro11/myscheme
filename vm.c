@@ -14,7 +14,7 @@
  */
 vm_code code[CODE_MAX];
 
-struct vm_data stack[STACK_MAX];
+vm_data stack[STACK_MAX];
 
 struct hashtable *global_table;
 
@@ -108,30 +108,31 @@ dump_code(int max)
  * write data to stdout
  */
 void
-write_vm_data(struct vm_data data)
+write_vm_data(vm_data data)
 {
 	int val;
-	switch(data.tag){
-		case VM_DATA_INTEGER:
-			val = data.u.integer;
-			printf("%-6s %8d","int",val);
-			break;
-		case VM_DATA_END_OF_FRAME:
-			printf("%-s", "end_of_frame");
-			break;
-		case VM_DATA_NIL:
-			printf("%-s", "nil");
-			break;
-		case VM_DATA_TRUE:
-			printf("%-s", "true");
-			break;
-		case VM_DATA_FALSE:
-			printf("%-s", "false");
-			break;
-		case VM_DATA_CLOSURE:
-			printf("%-6s <%d %d>", "close",data.u.closure[0].u.integer,
-					data.u.closure[1].u.integer);
-			break;
+	int64_t rc;
+	struct obj *p;
+
+	if(is_num(data)){
+		rc = data;
+		rc = rc>>2;
+		printf("%d",rc);
+	}else if (is_true(data)){
+		printf("#t");
+	}else if (is_false(data)){
+		printf("#f");
+	}else if (is_nil(data)){
+		printf("nil");
+	}else if (is_undefined(data)){
+		printf("undef");
+	}else if (is_end_of_frame(data)){
+		printf("end_of_frame");
+	}else if (is_obj(data)){
+		p = data - 3;
+		//if(p->tag == VM_OBJ_CLOSURE)
+			printf("lamnbda<%d,%d>", closure_body(data),
+					closure_ebody(data));
 	}
 }
 
@@ -159,59 +160,56 @@ dump_stack(int max)
  * u.closure[i]: vm_data list
  *
  */
-struct vm_data
+vm_data
 create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
 {
-	int i;
-	struct vm_data closure;
-
-	closure.tag = VM_DATA_CLOSURE;
-	closure.u.closure = malloc(sizeof(struct vm_data)*(n+2));
-
-	closure.u.closure[0].tag = VM_DATA_INTEGER;
-	closure.u.closure[0].u.integer = bodyadr;
-	closure.u.closure[1].tag = VM_DATA_INTEGER;
-	closure.u.closure[1].u.integer = ebodyadr;
-
-	for(i=0;i<n;i++){
-		closure.u.closure[i+2] = stack[s-i-1];
-	}
-
-	return closure;
+	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
+	obj->tag = VM_OBJ_CLOSURE;
+	obj->u.closure = malloc(sizeof(vm_data) * (n+2));
+	obj->u.closure[0] = bodyadr << 2;
+	obj->u.closure[1] = ebodyadr << 2;
+	return ((uint64_t)obj) | 3;
 }
 
 /*
- * get closure start addres
+ * get closure start address
  */
 uint32_t
-closure_body(struct vm_data data)
+closure_body(vm_data data)
 {
-	return data.u.closure[0].u.integer;
+	struct vm_obj *p;
+	p = data - 3;
+	return p->u.closure[0] >> 2;
+}
+
+uint32_t
+closure_ebody(vm_data data)
+{
+	struct vm_obj *p;
+	p = data - 3;
+	return p->u.closure[1] >> 2;
 }
 
 /*
  * execute code stored in variable code
  * and return last accumlator value
  */
-struct vm_data
+vm_data
 exec_code()
 {
 	int val,val2,val3;
 	char *str;
+	vm_data tmp, tmp2, tmp3;
 
-	struct vm_data tmp, tmp2, tmp3;
-
-	struct vm_data a;	/* accumlator 			*/
+	vm_data a;		/* accumlator 			*/
 	int pc;			/* program counter real number 	*/
 	int f;			/* frame pointer real number 	*/
 	int argp; 		/* argument pointer real number	*/
-	struct vm_data c;	/* closure pointer 		*/
+	vm_data c;		/* closure pointer 		*/
 	int s;			/* stack pointer real number	*/
 
 	pc = f = argp = s = 0;
-	a.tag = VM_DATA_INTEGER;
-	a.u.integer = 0;
-	c.tag = VM_DATA_NIL;
+	a = c = VM_DATA_UNDEFINED;
 
 	for(;;){
 		printf("pc= %d\n", pc);
@@ -230,29 +228,19 @@ exec_code()
 			case CODE_REFER_FREE:
 				break;
 			case CODE_REFER_GLOBAL:
-				str  = (char*)code[pc++];	/* string	*/
-				str  = str - 3;
-				printf("str = %s\n", str);
-				a = ht_find(global_table, str);
 				break;
 			case CODE_INDIRECT:
 				break;
 			case CODE_CONSTANT:
 				if((code[pc] &3 ) == 0){
 					/* number */
-					val = code[pc++];
-					val = val >> 2;
-					a.tag = VM_DATA_INTEGER;
-					a.u.integer = val;
+					a = code[pc++];
 				}else if(code[pc] == CODE_TRUE){
-					a.tag = VM_DATA_TRUE;
-					pc++;
+					a = VM_DATA_TRUE;
 				}else if(code[pc]  == CODE_FALSE){
-					a.tag = VM_DATA_FALSE;
-					pc++;
+					a = VM_DATA_FALSE;
 				}else if(code[pc] == CODE_NIL){
-					a.tag = VM_DATA_NIL;
-					pc++;
+					a = VM_DATA_NIL;
 				}else{
 					/* string */
 					val = code[pc++];
@@ -267,8 +255,8 @@ exec_code()
 			case CODE_BOX:
 				break;
 			case CODE_TEST:
-				val  = code[pc++] >> 2;	/* else adr	*/
-				if(a.tag == VM_DATA_FALSE)
+				val  = code[pc++] >> 2;		/* else adr	*/
+				if(a == VM_DATA_FALSE)
 					pc = val;
 				break;
 			case CODE_PLUS:
@@ -290,25 +278,11 @@ exec_code()
 			case CODE_NUATE:
 				break;
 			case CODE_FRAME:
-				val = code[pc++];	/* return address */
-				val = val >> 2;
-
-				tmp.tag = VM_DATA_END_OF_FRAME;
-				tmp.u.integer = -1;
-				stack[s++] = tmp;
-
-				tmp.tag = VM_DATA_INTEGER;
-				tmp.u.integer = val;
-				stack[s++] = tmp;
-
+				stack[s++] = VM_DATA_END_OF_FRAME;
+				stack[s++] = code[pc++];
 				stack[s++] = c;
-
-				tmp.u.integer = argp;
-				stack[s++] = tmp;
-
-				tmp.u.integer = f;
-				stack[s++] = tmp;
-
+				stack[s++] = argp;
+				stack[s++] = f;
 				break;
 			case CODE_ARGUMENT:
 				stack[s++] = a;
@@ -316,21 +290,18 @@ exec_code()
 			case CODE_SHIFT:
 				break;
 			case CODE_APPLY:
-				val = code[pc++];	/* argument size */
-				val = val>>2;
-
+				val = code[pc++] >> 2;	/* n 	*/
 				pc = closure_body(a);
-				f = s - val;
+				f = s-val;
 				argp = s;
 				c = a;
 				break;
 			case CODE_RETURN:
-				val = code[pc++];	/* argument size */
-				val = val>>2;
-				s -= val;
-				pc = stack[s-4].u.integer;
-				f = stack[s-1].u.integer;
-				argp = stack[s-2].u.integer;
+				val = code[pc++] >> 2;	/* n 	*/
+				s = s-val;
+				pc = stack[s-4] >> 2;
+				f = stack[s-1];
+				argp = stack[s-2];
 				c = stack[s-3];
 				s = s-5;
 				break;
@@ -344,18 +315,18 @@ exec_code()
 void
 ht_init(struct hashtable *table)
 {
-	struct vm_data d;
-	d.tag = VM_DATA_INTEGER;
-	d.u.integer = 123;
-	ht_insert(table, "x", d);
-	d.u.integer = 256;
-	ht_insert(table, "y", d);
+	//vm_data d;
+	//d.tag = VM_DATA_INTEGER;
+	//d.u.integer = 123;
+	//ht_insert(table, "x", d);
+	//d.u.integer = 256;
+	//ht_insert(table, "y", d);
 }
 
 int
 main(int argc, char **argv)
 {
-	struct vm_data rc;
+	vm_data rc;
 
 	global_table = ht_create();
 	ht_init(global_table);

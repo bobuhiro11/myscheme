@@ -45,13 +45,11 @@ MurmurHash2(const void * key, int len, uint32_t seed)
  * insert data to hash table.
  * return data if success, VM_DATA_UNDEFINED otherwise.
  */
-struct vm_data
-ht_insert(struct hashtable *table, const char *key, struct vm_data data)
+vm_data
+ht_insert(struct hashtable *table, const char *key, vm_data data)
 {
 	int len = strlen(key);
 	uint32_t h = MurmurHash2( (void*)key, len+1, (uint32_t)table);
-	struct vm_data rc;
-	rc.tag = VM_DATA_UNDEFINED;
 
 	int n;
 	for(n = 0;n<HASHTABLE_SIZE;n++){
@@ -65,30 +63,28 @@ ht_insert(struct hashtable *table, const char *key, struct vm_data data)
 			return table[i].data;
 		}
 	}
-	return rc;
+	return VM_DATA_UNDEFINED;
 }
 
 /*
  * find data from hash table.
  * return data if success, VM_DATA_UNDEFINED otherwise.
  */
-struct vm_data
+vm_data
 ht_find(const struct hashtable *table, const char *key)
 {
 	int len = strlen(key);
 	uint32_t h = MurmurHash2( (void*)key, len+1, (uint32_t)table);
-	struct vm_data rc;
-	rc.tag = VM_DATA_UNDEFINED;
 
 	int n;
 	for(n=0;n<HASHTABLE_SIZE;n++){
 		int i = (h + n) % HASHTABLE_SIZE;
 		if(table[i].key[0] == '\0')
-			return rc;
+			return VM_DATA_UNDEFINED;
 		else if(strncmp(table[i].key, key, KEYWORD_BUFLEN)==0)
 			return table[i].data;
 	}
-	return rc;
+	return VM_DATA_UNDEFINED;
 }
 
 /*
@@ -115,8 +111,6 @@ ht_create()
 {
 	struct hashtable *table;
 	int i;
-	struct vm_data rc;
-	rc.tag = VM_DATA_UNDEFINED;
 
 	if(!(table = (struct hashtable*)malloc(sizeof(struct hashtable) * HASHTABLE_SIZE)))
 		return NULL;
@@ -124,7 +118,7 @@ ht_create()
 	memset(table, 0, HASHTABLE_SIZE*sizeof(struct hashtable));
 
 	for(i=0;i<HASHTABLE_SIZE;i++)
-		table[i].data = rc;
+		table[i].data = VM_DATA_UNDEFINED;
 	return table;
 }
 

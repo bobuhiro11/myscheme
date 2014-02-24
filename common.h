@@ -37,38 +37,46 @@
 #define CODE_FALSE 		0x00000009
 #define CODE_NIL 		0x0000000d
 
-#define VM_DATA_TRUE		0x01		/* for tag of vm_data */
-#define VM_DATA_FALSE		0x02
-#define VM_DATA_NIL		0x03
-#define VM_DATA_EOF		0x04
-#define VM_DATA_UNDEFINED	0x05
-#define VM_DATA_UNBOUND		0x06
-#define VM_DATA_STR		0x07
-#define VM_DATA_CLOSURE		0x08
-#define VM_DATA_INTEGER		0x09
-#define VM_DATA_END_OF_FRAME	0xFD
+#define VM_DATA_TRUE		0x03		/* for vm_data */
+#define VM_DATA_FALSE		0x09
+#define VM_DATA_NIL		0x0d
+#define VM_DATA_EOF		0x11
+#define VM_DATA_UNDEFINED	0x15
+#define VM_DATA_UNBOUND		0x19
+#define VM_DATA_END_OF_FRAME	0x1D
+
+#define VM_OBJ_STR		0x01 		/* for tag of struct vm_obj */
+#define VM_OBJ_CLOSURE		0x02
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
+
+#define is_num(x) 		((x & 3) == 0)
+#define is_true(x) 		((x - VM_DATA_TRUE) == 0)
+#define is_false(x) 		((x - VM_DATA_FALSE) == 0)
+#define is_nil(x) 		((x - VM_DATA_NIL) == 0)
+#define is_undefined(x) 	((x - VM_DATA_UNDEFINED) == 0)
+#define is_end_of_frame(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
+#define is_obj(x) 		((x & 0x3) == 0x3)
 
 /***************************************************
  * structure definition
  ***************************************************/
 typedef uint64_t vm_code;
+typedef uint64_t vm_data;
 
-struct vm_data
+struct vm_obj
 {
 	unsigned char tag;
 	union{
-		int integer;
 		char *str;
-		struct vm_data *closure;
+		vm_data *closure;
 	} u;
 };
 
 struct hashtable{
 		char   key[KEYWORD_BUFLEN];
-		struct vm_data data;
+		vm_data data;
 };
 
 /***************************************************
@@ -77,14 +85,15 @@ struct hashtable{
 vm_code get_vm_code(const char* s);
 void get_code();
 void dump_code(int max);
-void write_vm_data(struct vm_data data);
+void write_vm_data(vm_data data);
 void dump_stack(int max);
-struct vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s);
-uint32_t closure_body(struct vm_data data);
-struct vm_data exec_code();
+vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s);
+uint32_t closure_body(vm_data data);
+uint32_t closure_ebody(vm_data data);
+vm_data exec_code();
 
-struct vm_data ht_insert(struct hashtable *table, const char *key, struct vm_data data);
-struct vm_data ht_find(const struct hashtable *table, const char *key);
+vm_data ht_insert(struct hashtable *table, const char *key, vm_data data);
+vm_data ht_find(const struct hashtable *table, const char *key);
 void ht_dump(const struct hashtable *table);
 struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
@@ -93,6 +102,6 @@ void ht_destory(struct hashtable *table);
  * external variable definition
  ***************************************************/
 extern vm_code code[CODE_MAX];
-extern struct vm_data stack[STACK_MAX];
+extern vm_data stack[STACK_MAX];
 
 #endif
