@@ -58,6 +58,8 @@
 #define is_undefined(x) 	((x - VM_DATA_UNDEFINED) == 0)
 #define is_end_of_frame(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
 #define is_obj(x) 		((x & 0x3) == 0x3)
+#define is_closure(x) 		\
+	((x & 0x3) == 0x3 && ((struct vm_obj*)(x-3))->tag == VM_OBJ_CLOSURE)
 
 /***************************************************
  * structure definition

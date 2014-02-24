@@ -126,7 +126,7 @@ write_vm_data(vm_data data)
 {
 	int val;
 	int64_t rc;
-	struct obj *p;
+	struct vm_obj *p;
 
 	if(is_num(data)){
 		rc = data;
@@ -144,7 +144,7 @@ write_vm_data(vm_data data)
 		printf("end_of_frame");
 	}else if (is_obj(data)){
 		p = data - 3;
-		//if(p->tag == VM_OBJ_CLOSURE)
+		if(p->tag == VM_OBJ_CLOSURE)
 			printf("lamnbda<%d,%d>", closure_body(data),
 					closure_ebody(data));
 	}
@@ -191,17 +191,16 @@ create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
 uint32_t
 closure_body(vm_data data)
 {
-	struct vm_obj *p;
-	p = data - 3;
-	return p->u.closure[0] >> 2;
+	return ((struct vm_obj*)(data-3)) -> u.closure[0] >> 2;
 }
 
+/*
+ * get closure end address
+ */
 uint32_t
 closure_ebody(vm_data data)
 {
-	struct vm_obj *p;
-	p = data - 3;
-	return p->u.closure[1] >> 2;
+	return ((struct vm_obj*)(data-3)) -> u.closure[1] >> 2;
 }
 
 /*
@@ -211,8 +210,6 @@ closure_ebody(vm_data data)
 vm_data
 exec_code()
 {
-	int val,val2,val3;
-	char *str;
 	vm_data tmp, tmp2, tmp3;
 
 	vm_data a;		/* accumlator 			*/
@@ -231,69 +228,47 @@ exec_code()
 		write_vm_data(a);
 		printf("\n");
 
-		val = code[pc++];
-		switch(val){
+		switch(code[pc++]){
 			case CODE_HALT:
 				return a;
 			case CODE_REFER_LOCAL:
-				val  = code[pc++] >> 2;	/* n		*/
-				a = stack[s-val-1];
+				a = stack[s-(code[pc++]>>2)-1];
 				break;
 			case CODE_REFER_FREE:
 				break;
 			case CODE_REFER_GLOBAL:
-				tmp  = code[pc++];	/* n		*/
-				a = ht_find(global_table, tmp-3);
+				a = ht_find(global_table, code[pc++]-3);
 				break;
 			case CODE_INDIRECT:
 				break;
 			case CODE_CONSTANT:
-				if((code[pc] &3 ) == 0){
-					/* number */
-					a = code[pc++];
-				}else if(code[pc] == CODE_TRUE){
-					a = VM_DATA_TRUE;
-				}else if(code[pc]  == CODE_FALSE){
-					a = VM_DATA_FALSE;
-				}else if(code[pc] == CODE_NIL){
-					a = VM_DATA_NIL;
-				}else{
-					/* string */
-					val = code[pc++];
-				}
+				tmp = code[pc++];
+				if((tmp & 3) == 0)		a = tmp;
+				else if(tmp == CODE_TRUE)	a = VM_DATA_TRUE;
+				else if(tmp  == CODE_FALSE)	a = VM_DATA_FALSE;
+				else if(tmp == CODE_NIL)	a = VM_DATA_NIL;
+				else				tmp = tmp;
 				break;
 			case CODE_CLOSE:
-				val  = code[pc++] >> 2;	/* n		*/
-				val2 = code[pc++] >> 2;	/* bodyadr 	*/
-				val3 = code[pc++] >> 2;	/* ebodyadr	*/
-				a = create_closure(val, val2, val3, s);
+				tmp  = code[pc++] >> 2;	/* n		*/
+				tmp2 = code[pc++] >> 2;	/* bodyadr 	*/
+				tmp3 = code[pc++] >> 2;	/* ebodyadr	*/
+				a = create_closure(tmp, tmp2, tmp3, s);
 				break;
 			case CODE_BOX:
 				break;
 			case CODE_TEST:
-				val  = code[pc++] >> 2;		/* else adr	*/
-				if(a == VM_DATA_FALSE)
-					pc = val;
+				tmp  = code[pc++] >> 2;	/* else adr	*/
+				if(a == VM_DATA_FALSE)	pc = tmp;
 				break;
 			case CODE_PLUS:
-				tmp = stack[s-1] >> 2;
-				tmp2 = stack[s-2] >> 2;
-				tmp = tmp + tmp2;
-				tmp = tmp << 2;
-				a = tmp;
+				a = ((stack[s-1]>>2) + (stack[s-2]>>2)) << 2;
 				break;
 			case CODE_MINUS:
-				tmp = stack[s-1] >> 2;
-				tmp2 = stack[s-2] >> 2;
-				tmp = tmp - tmp2;
-				tmp = tmp << 2;
-				a = tmp;
+				a = ((stack[s-1]>>2) + (stack[s-2]>>2)) << 2;
 				break;
 			case CODE_EQUAL:
-				if(stack[s-1] == stack[s-2])
-					a = VM_DATA_TRUE;
-				else
-					a = VM_DATA_FALSE;
+				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_ASSIGN_LOCAL:
 				break;
@@ -320,20 +295,18 @@ exec_code()
 			case CODE_SHIFT:
 				break;
 			case CODE_APPLY:
-				val = code[pc++] >> 2;	/* n 	*/
-				pc = closure_body(a);
-				f = s-val;
-				argp = s;
-				c = a;
+				f	= s - (code[pc++] >> 2);
+				pc 	= closure_body(a);
+				argp	= s;
+				c	= a;
 				break;
 			case CODE_RETURN:
-				val = code[pc++] >> 2;	/* n 	*/
-				s = s-val;
-				pc = stack[s-4] >> 2;
-				f = stack[s-1];
-				argp = stack[s-2];
-				c = stack[s-3];
-				s = s-5;
+				s	= s-(code[pc++] >> 2);
+				pc 	= stack[s-4] >> 2;
+				f 	= stack[s-1];
+				argp 	= stack[s-2];
+				c 	= stack[s-3];
+				s 	= s-5;
 				break;
 		}
 	}
@@ -346,19 +319,12 @@ void
 ht_init(struct hashtable *table)
 {
 	vm_data d;
-	d = 123 << 2;
-	ht_insert(table, "x", d);
-	d = 256 << 2;
-	ht_insert(table, "y", d);
 
-	d = create_closure(0, 1000, 1002,0);
-	ht_insert(table, "=", d);
-
-	d = create_closure(0, 1003, 1005,0);
-	ht_insert(table, "-", d);
-
-	d = create_closure(0, 1006, 1008,0);
-	ht_insert(table, "+", d);
+	ht_insert(table, "x", 123<<2);
+	ht_insert(table, "y", 256<<2);
+	ht_insert(table, "=", create_closure(0, 1000, 1002,0));
+	ht_insert(table, "-", create_closure(0, 1003, 1005,0));
+	ht_insert(table, "+", create_closure(0, 1006, 1008,0));
 }
 
 int
