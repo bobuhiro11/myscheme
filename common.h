@@ -41,6 +41,9 @@
 #define CODE_RETURN      	0xFF000017
 #define CODE_GT 	      	0xFF000018
 #define CODE_LT		      	0xFF000019
+#define CODE_CONS	      	0xFF00001A
+#define CODE_CAR	      	0xFF00001B
+#define CODE_CDR	      	0xFF00001C
 #define CODE_INVALID 		0xFFFFFFFF
 #define CODE_TRUE 		0x00000001
 #define CODE_FALSE 		0x00000009
@@ -57,6 +60,7 @@
 #define VM_OBJ_STR		0x01 		/* for tag of struct vm_obj */
 #define VM_OBJ_CLOSURE		0x02
 #define VM_OBJ_STACK		0x03
+#define VM_OBJ_PAIR		0x04
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
@@ -71,6 +75,8 @@
 #define IS_BOX(x) 		(((x)&3)==2)
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
 #define IS_STACK(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STACK)
+#define IS_PAIR(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_PAIR)
+
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
 #define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
@@ -95,6 +101,10 @@ struct vm_obj
 			vm_data *p;
 			int size;
 		} stack;
+		struct {
+			vm_data *car;
+			vm_data *cdr;
+		} pair;
 	} u;
 };
 

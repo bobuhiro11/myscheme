@@ -53,8 +53,6 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"shift"))		rc =  CODE_SHIFT;
 	else if(!strcmp(s,"apply"))		rc =  CODE_APPLY;
 	else if(!strcmp(s,"return"))		rc =  CODE_RETURN;
-	else if(!strcmp(s,"gt"))		rc =  CODE_GT;
-	else if(!strcmp(s,"lt"))		rc =  CODE_LT;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
 	else if(!strcmp(s,"nil")
@@ -113,6 +111,15 @@ init_code()
 	code[1012] = CODE_LT;
 	code[1013] = CODE_RETURN;
 	code[1014] = 2<<2;
+	code[1015] = CODE_CONS;
+	code[1016] = CODE_RETURN;
+	code[1017] = 2<<2;
+	code[1018] = CODE_CAR;
+	code[1019] = CODE_RETURN;
+	code[1020] = 1<<2;
+	code[1021] = CODE_CDR;
+	code[1022] = CODE_RETURN;
+	code[1023] = 1<<2;
 }
 
 /*
@@ -210,6 +217,14 @@ write_vm_data(vm_data data)
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
 	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
+	else if(IS_PAIR(data)) { 
+		p = data-3;
+		printf("(");
+		write_vm_data(p->u.pair.car); 
+		printf(" . ");
+		write_vm_data(p->u.pair.cdr); 
+		printf(")");
+	}
 }
 
 /*
@@ -327,6 +342,7 @@ vm_data
 exec_code()
 {
 	vm_data tmp, tmp2, tmp3;
+	struct vm_obj *p;
 
 	vm_data a;		/* accumlator 			*/
 	int pc;			/* program counter real number 	*/
@@ -402,6 +418,19 @@ exec_code()
 			case CODE_EQUAL:
 				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
+			case CODE_CONS:
+				p = malloc(sizeof(struct vm_obj));
+				p->tag = VM_OBJ_PAIR;
+				p->u.pair.car = stack[s-1];
+				p->u.pair.cdr = stack[s-2];
+				a = (vm_data)p |  3;
+				break;
+			case CODE_CAR:
+				a = ((struct vm_obj*)(stack[s-1] - 3))->u.pair.car;
+				break;
+			case CODE_CDR:
+				a = ((struct vm_obj*)(stack[s-1] - 3))->u.pair.cdr;
+				break;
 			case CODE_ASSIGN_LOCAL:
 				tmp  = code[pc++] >> 2;	/* n		*/
 				setbox(INDEX(argp, tmp), a);
@@ -464,13 +493,16 @@ exec_code()
 void
 ht_init(struct hashtable *table)
 {
-	ht_insert(table, "x", 123<<2);
-	ht_insert(table, "y", 256<<2);
-	ht_insert(table, "=", create_closure(0, 1000, 1002,0));
-	ht_insert(table, "-", create_closure(0, 1003, 1005,0));
-	ht_insert(table, "+", create_closure(0, 1006, 1008,0));
-	ht_insert(table, ">", create_closure(0, 1009, 1011,0));
-	ht_insert(table, "<", create_closure(0, 1012, 1014,0));
+	ht_insert(table, "x",    123<<2);
+	ht_insert(table, "y",    256<<2);
+	ht_insert(table, "=",    create_closure(0, 1000, 1002,0));
+	ht_insert(table, "-",    create_closure(0, 1003, 1005,0));
+	ht_insert(table, "+",    create_closure(0, 1006, 1008,0));
+	ht_insert(table, ">",    create_closure(0, 1009, 1011,0));
+	ht_insert(table, "<",    create_closure(0, 1012, 1014,0));
+	ht_insert(table, "cons", create_closure(0, 1015, 1017,0));
+	ht_insert(table, "car",  create_closure(0, 1018, 1020,0));
+	ht_insert(table, "cdr",  create_closure(0, 1021, 1023,0));
 }
 
 int
