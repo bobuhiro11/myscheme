@@ -118,7 +118,7 @@ void
 dump_code(int max)
 {
 	int i;
-	printf("**code**\n");
+	printf("=== code ===\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
 		printf("%d %018p", i, code[i]);
 		switch(code[i]){
@@ -215,7 +215,7 @@ void
 dump_stack(int max)
 {
 	int i;
-	printf("**stack**\n");
+	printf("=== stack ===\n");
 	for(i=0;i<STACK_MAX && i<max;i++){
 		printf("%2d ",i);
 		printf("%018p ;",stack[i]);
@@ -406,8 +406,6 @@ exec_code()
 void
 ht_init(struct hashtable *table)
 {
-	vm_data d;
-
 	ht_insert(table, "x", 123<<2);
 	ht_insert(table, "y", 256<<2);
 	ht_insert(table, "=", create_closure(0, 1000, 1002,0));
@@ -431,6 +429,7 @@ main(int argc, char **argv)
 	get_code();
 	dump_code(10);
 	rc = exec_code();
+	printf("=== result ===\n");
 	write_vm_data(rc);
 	printf("\n");
 	dump_stack(10);

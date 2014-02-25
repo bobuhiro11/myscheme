@@ -14,7 +14,7 @@
 #define B(x) PP_HEX2BIN(0 ## x)
 
 #define CODE_MAX 2048
-#define STACK_MAX 64
+#define STACK_MAX 1024
 
 #define CODE_HALT 		0xFF000001	/* for vm_code */
 #define CODE_REFER_LOCAL 	0xFF000002
