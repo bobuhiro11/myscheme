@@ -64,6 +64,5 @@
                                                        0
                                                        (+ x (s (- x 1)))))])
                                          (s 10))))
-;(test* "#36" 99             (evaluate '((lambda (x y) ((lambda () (set! y 99) y)))
-;					10 20)))
+(test* "#36" 100            (evaluate '((lambda (x) ((lambda () (set! x 100) x))) 19)))
 (test-end)

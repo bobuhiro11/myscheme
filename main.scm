@@ -40,12 +40,6 @@
          (compile (expand-traditional-macro code) '(() . ()) '() '(halt))
          0))))
 
-;(linear-compile '(letrec ([s (lambda (x)
-;                               (if (= x 0)
-;                                 0
-;                                 (+ x (s (- x 1)))))])
-;                   (s 10)))
-
 (define my-repl
   (lambda ()
     (let ([c (read)])

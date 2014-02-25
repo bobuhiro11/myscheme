@@ -23,8 +23,8 @@
         [(pair? x)
          (record-case x
                       [quote (obj) '()]
-                      [lambda (vars body)
-                        (find-free body (set-union vars b) e)]
+                      [lambda (vars . bodies)
+                        (find-free-bodies bodies (set-union vars b) e)]
                       [if (test then else)
                         (set-union (find-free test b e)
                                    (set-union (find-free then b e)
@@ -59,8 +59,8 @@
        (record-case x
                     [quote (obj)
                            '()]
-                    [lambda (vars body)
-                      (find-sets body (set-minus v vars))]
+                    [lambda (vars . bodies)
+                      (find-sets-bodies bodies (set-minus v vars))]
                     [if (test then else)
                       (set-union (find-sets test v)
                                  (set-union (find-sets then v)
