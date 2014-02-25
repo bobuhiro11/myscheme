@@ -405,7 +405,19 @@
                                    (VM (refer-global n) (2+ pc) f argp c s code))]
                [indirect ()
                          (VM (unbox a) (1+ pc) f argp c s code)]
-               [constant ()
+               [conststr ()
+                         (let1 obj (code-index-content code (1+ pc))
+                               (VM obj (2+ pc) f argp c s code))]
+               [constnum ()
+                         (let1 obj (code-index-content code (1+ pc))
+                               (VM obj (2+ pc) f argp c s code))]
+               [constsym ()
+                         (let1 obj (code-index-content code (1+ pc))
+                               (VM obj (2+ pc) f argp c s code))]
+               [constnil ()
+                         (let1 obj (code-index-content code (1+ pc))
+                               (VM obj (2+ pc) f argp c s code))]
+               [constboo ()
                          (let1 obj (code-index-content code (1+ pc))
                                (VM obj (2+ pc) f argp c s code))]
                [close ()

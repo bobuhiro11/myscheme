@@ -25,8 +25,24 @@
                  [indirect (x)
                               (cons (list adr 'indirect)
                                     (3imp->linear x (+ adr 1)))]
-                 [constant (obj x)
-                              (cons (list adr 'constant)
+                 [conststr (obj x)
+                              (cons (list adr 'conststr)
+                                    (cons (list (+ adr 1) obj)
+                                          (3imp->linear x (+ adr 2))))]
+                 [constnum (obj x)
+                              (cons (list adr 'constnum)
+                                    (cons (list (+ adr 1) obj)
+                                          (3imp->linear x (+ adr 2))))]
+                 [constsym (obj x)
+                              (cons (list adr 'constsym)
+                                    (cons (list (+ adr 1) obj)
+                                          (3imp->linear x (+ adr 2))))]
+                 [constboo (obj x)
+                              (cons (list adr 'constboo)
+                                    (cons (list (+ adr 1) obj)
+                                          (3imp->linear x (+ adr 2))))]
+                 [constnil (obj x)
+                              (cons (list adr 'constnil)
                                     (cons (list (+ adr 1) obj)
                                           (3imp->linear x (+ adr 2))))]
                  [close (n body x)
