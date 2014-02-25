@@ -416,20 +416,21 @@ exec_code()
 					? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_EQUAL:
-				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
+				a = INDEX(s,0) == INDEX(s,1) ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_CONS:
 				p = malloc(sizeof(struct vm_obj));
 				p->tag = VM_OBJ_PAIR;
-				p->u.pair.car = stack[s-1];
-				p->u.pair.cdr = stack[s-2];
 				a = (vm_data)p |  3;
+
+				CAR(a) = INDEX(s,0);
+				CDR(a) = INDEX(s,1);
 				break;
 			case CODE_CAR:
-				a = ((struct vm_obj*)(stack[s-1] - 3))->u.pair.car;
+				a = CAR(INDEX(s,0));
 				break;
 			case CODE_CDR:
-				a = ((struct vm_obj*)(stack[s-1] - 3))->u.pair.cdr;
+				a = CDR(INDEX(s,0));
 				break;
 			case CODE_ASSIGN_LOCAL:
 				tmp  = code[pc++] >> 2;	/* n		*/

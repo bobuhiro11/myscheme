@@ -81,6 +81,9 @@
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
 #define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
 
+#define CAR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.car)
+#define CDR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.cdr)
+
 #define PUSH(s,x)		(stack[s] = x, (s)+1)
 #define INDEX(s,n)		(stack[(s)-(n)-1])
 #define SET_INDEX(s,n,x)	(stack[(s)-(n)-1] = x)
