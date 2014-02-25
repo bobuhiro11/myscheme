@@ -66,4 +66,5 @@
                                          (s 10))))
 (test* "#36" 100            (evaluate '((lambda (x) ((lambda () (set! x 100) x))) 19)))
 (test* "#37" 10             (evaluate '(if (> 10 9) 10 9)))
+(test* "#38" '(2 3)         (evaluate '(cons 2 (cons 3 '()))))
 (test-end)
