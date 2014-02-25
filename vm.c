@@ -93,35 +93,6 @@ get_code()
 	rom_last_address = i;
 }
 
-void
-init_code()
-{
-	code[1000] = CODE_EQUAL;
-	code[1001] = CODE_RETURN;
-	code[1002] = 2<<2;
-	code[1003] = CODE_MINUS;
-	code[1004] = CODE_RETURN;
-	code[1005] = 2<<2;
-	code[1006] = CODE_PLUS;
-	code[1007] = CODE_RETURN;
-	code[1008] = 2<<2;
-	code[1009] = CODE_GT;
-	code[1010] = CODE_RETURN;
-	code[1011] = 2<<2;
-	code[1012] = CODE_LT;
-	code[1013] = CODE_RETURN;
-	code[1014] = 2<<2;
-	code[1015] = CODE_CONS;
-	code[1016] = CODE_RETURN;
-	code[1017] = 2<<2;
-	code[1018] = CODE_CAR;
-	code[1019] = CODE_RETURN;
-	code[1020] = 1<<2;
-	code[1021] = CODE_CDR;
-	code[1022] = CODE_RETURN;
-	code[1023] = 1<<2;
-}
-
 /*
  * dump code
  */
@@ -158,6 +129,7 @@ dump_code(int max)
 			case CODE_RETURN:        printf(" ;RETURN"); break;
 			case CODE_GT:        	 printf(" ;GT"); break;
 			case CODE_LT:        	 printf(" ;LT"); break;
+			case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
 			case CODE_TRUE:          printf(" ;TRUE"); break;
 			case CODE_FALSE:         printf(" ;FALSE"); break;
 			case CODE_NIL:           printf(" ;NIL"); break;
@@ -432,6 +404,9 @@ exec_code()
 			case CODE_CDR:
 				a = CDR(INDEX(s,0));
 				break;
+			case CODE_IS_NULL:
+				a = INDEX(s,0) == VM_DATA_NIL ? VM_DATA_TRUE : VM_DATA_FALSE;
+				break;
 			case CODE_ASSIGN_LOCAL:
 				tmp  = code[pc++] >> 2;	/* n		*/
 				setbox(INDEX(argp, tmp), a);
@@ -488,22 +463,56 @@ exec_code()
 	}
 }
 
+void
+init_code()
+{
+	code[1000] = CODE_EQUAL;
+	code[1001] = CODE_RETURN;
+	code[1002] = 2<<2;
+	code[1003] = CODE_MINUS;
+	code[1004] = CODE_RETURN;
+	code[1005] = 2<<2;
+	code[1006] = CODE_PLUS;
+	code[1007] = CODE_RETURN;
+	code[1008] = 2<<2;
+	code[1009] = CODE_GT;
+	code[1010] = CODE_RETURN;
+	code[1011] = 2<<2;
+	code[1012] = CODE_LT;
+	code[1013] = CODE_RETURN;
+	code[1014] = 2<<2;
+	code[1015] = CODE_CONS;
+	code[1016] = CODE_RETURN;
+	code[1017] = 2<<2;
+	code[1018] = CODE_CAR;
+	code[1019] = CODE_RETURN;
+	code[1020] = 1<<2;
+	code[1021] = CODE_CDR;
+	code[1022] = CODE_RETURN;
+	code[1023] = 1<<2;
+	code[1024] = CODE_IS_NULL;
+	code[1025] = CODE_RETURN;
+	code[1026] = 1<<2;
+}
+
+
 /*
  * insert initial data
  */
 void
 ht_init(struct hashtable *table)
 {
-	ht_insert(table, "x",    123<<2);
-	ht_insert(table, "y",    256<<2);
-	ht_insert(table, "=",    create_closure(0, 1000, 1002,0));
-	ht_insert(table, "-",    create_closure(0, 1003, 1005,0));
-	ht_insert(table, "+",    create_closure(0, 1006, 1008,0));
-	ht_insert(table, ">",    create_closure(0, 1009, 1011,0));
-	ht_insert(table, "<",    create_closure(0, 1012, 1014,0));
-	ht_insert(table, "cons", create_closure(0, 1015, 1017,0));
-	ht_insert(table, "car",  create_closure(0, 1018, 1020,0));
-	ht_insert(table, "cdr",  create_closure(0, 1021, 1023,0));
+	ht_insert(table, "x",      123<<2);
+	ht_insert(table, "y",      256<<2);
+	ht_insert(table, "=",      create_closure(0, 1000, 1002,0));
+	ht_insert(table, "-",      create_closure(0, 1003, 1005,0));
+	ht_insert(table, "+",      create_closure(0, 1006, 1008,0));
+	ht_insert(table, ">",      create_closure(0, 1009, 1011,0));
+	ht_insert(table, "<",      create_closure(0, 1012, 1014,0));
+	ht_insert(table, "cons",   create_closure(0, 1015, 1017,0));
+	ht_insert(table, "car",    create_closure(0, 1018, 1020,0));
+	ht_insert(table, "cdr",    create_closure(0, 1021, 1023,0));
+	ht_insert(table, "null?",  create_closure(0, 1024, 1026,0));
 }
 
 int

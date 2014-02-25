@@ -44,6 +44,7 @@
 #define CODE_CONS	      	0xFF00001A
 #define CODE_CAR	      	0xFF00001B
 #define CODE_CDR	      	0xFF00001C
+#define CODE_IS_NULL	      	0xFF00001D
 #define CODE_INVALID 		0xFFFFFFFF
 #define CODE_TRUE 		0x00000001
 #define CODE_FALSE 		0x00000009

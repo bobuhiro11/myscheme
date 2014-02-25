@@ -10,4 +10,4 @@
                 (ltak (lambda () x)
                       (lambda () y)
                       (lambda () z)))])
-  (tak 30 15 0))
+  (tak 20 10 0))
