@@ -250,7 +250,6 @@ void
 shift_args(uint32_t n, uint32_t m, uint32_t s)
 {
 	int i;
-	printf("n = %d, m = %d\n",n,m);
 	for(i=n-1; i>=0; i--){
 		SET_INDEX(s,i+m, INDEX(s,i));
 	}
@@ -352,8 +351,8 @@ exec_code()
 				s = PUSH(s, VM_DATA_END_OF_FRAME);
 				s = PUSH(s, code[pc++]);
 				s = PUSH(s, c);
-				s = PUSH(s, argp);
-				s = PUSH(s, f);
+				s = PUSH(s, argp << 2);
+				s = PUSH(s, f << 2);
 				break;
 			case CODE_ARGUMENT:
 				s = PUSH(s, a);
@@ -374,9 +373,9 @@ exec_code()
 			case CODE_RETURN:
 				s	= s-(code[pc++] >> 2);
 				pc 	= INDEX(s,3) >> 2;
-				f 	= INDEX(s,0);
-				argp 	= INDEX(s,1);
 				c 	= INDEX(s,2);
+				argp 	= INDEX(s,1) >> 2;
+				f 	= INDEX(s,0) >> 2;
 				s 	= s-5;
 				break;
 		}

@@ -129,10 +129,5 @@ void
 ht_destory(struct hashtable *table)
 {
 	int i;
-	//for(i=0;i<HASHTABLE_SIZE;i++){
-	//	if(table[i].key[0] != '\0'){
-	//		sexp_free(table[i].data,1);
-	//	}
-	//}
 	free(table);
 }

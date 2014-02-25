@@ -6,6 +6,13 @@
 #include<string.h>
 #include<stdlib.h>
 
+#define PP_HEX2BIN(b)	\
+	(((b & 1 <<  0) >>  0) + ((b & 1 <<  3) >>  2) + ((b & 1 <<  6) >>  4) + \
+	 ((b & 1 <<  9) >>  6) + ((b & 1 << 12) >>  8) + ((b & 1 << 15) >> 10) + \
+	 ((b & 1 << 18) >> 12) + ((b & 1 << 21) >> 14))
+
+#define B(x) PP_HEX2BIN(0 ## x)
+
 #define CODE_MAX 2048
 #define STACK_MAX 64
 
@@ -37,13 +44,13 @@
 #define CODE_FALSE 		0x00000009
 #define CODE_NIL 		0x0000000d
 
-#define VM_DATA_TRUE		0x03		/* for vm_data */
-#define VM_DATA_FALSE		0x09
-#define VM_DATA_NIL		0x0d
-#define VM_DATA_EOF		0x11
-#define VM_DATA_UNDEFINED	0x15
-#define VM_DATA_UNBOUND		0x19
-#define VM_DATA_END_OF_FRAME	0x1D
+#define VM_DATA_TRUE		B(00101)	/* for vm_data */
+#define VM_DATA_FALSE		B(01001)
+#define VM_DATA_NIL		B(01101)
+#define VM_DATA_EOF		B(10001)
+#define VM_DATA_UNDEFINED	B(10101)
+#define VM_DATA_UNBOUND		B(11001)
+#define VM_DATA_END_OF_FRAME	B(11101)
 
 #define VM_OBJ_STR		0x01 		/* for tag of struct vm_obj */
 #define VM_OBJ_CLOSURE		0x02
