@@ -106,16 +106,17 @@
   (- s m))
 
 (define *global*
-  (list '(x    . 123)
-        '(y    . 256)
-        '(=    . #(1000))
-        '(-    . #(1003))
-        '(+    . #(1006))
-        '(>    . #(1009))
-        '(<    . #(1012))
-        '(cons . #(1015))
-        '(car  . #(1018))
-        '(cdr  . #(1021))))
+  (list '(x     . 123)
+        '(y     . 256)
+        '(=     . #(1000))
+        '(-     . #(1003))
+        '(+     . #(1006))
+        '(>     . #(1009))
+        '(<     . #(1012))
+        '(cons  . #(1015))
+        '(car   . #(1018))
+        '(cdr   . #(1021))
+        '(null? . #(1024))))
 
 ;; (refer-global 'x)
 ;;
@@ -194,7 +195,10 @@
     (#x3Fc 1)
     (#x3Fd cdr)
     (#x3Fe return)
-    (#x3Ff 1)))
+    (#x3Ff 1)
+    (#x400 null?)
+    (#x401 return)
+    (#x402 1)))
 
 ;; アドレスからコードを得る
 (define code-index
@@ -442,6 +446,9 @@
                [cdr ()
                      (let ([a (index argp 0)])
                        (VM (cdr a) (1+ pc) f argp c s code))]
+               [null? ()
+                     (let ([a (index argp 0)])
+                       (VM (null? a) (1+ pc) f argp c s code))]
                [equal ()
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
