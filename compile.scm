@@ -223,49 +223,53 @@
 ;; s = (set!される自由変数のリスト)
 (define (compile x e s next)
   (cond 
-        [(null? x)
-         (list 'constnil x next)]
-        [(boolean? x)
-         (list 'constboo x next)]
-        [(symbol? x)
-         (compile-refer x e
-                        (if (set-member? x s)
-                          (list 'indirect next)
-                          next))]
-        [(string? x)
-              (list 'conststr x next)]
-        [(number? x)
-              (list 'constnum x next)]
-	[(pair? x)
-	 (record-case x
-		      [quote (obj)
-			     (cond
-			       [(null? x)
-				(list 'constnil x next)]
-			       [(boolean? x)
-				(list 'constboo x next)]
-			       [(pair? obj)
-				(compile (letrec
-					   ([next (lambda (args)
-						    (if (null? args)
-						      '()
-						      (list 'cons (list 'quote (car args)) (next (cdr args)))))])
-					   (next obj)) e s next)]
-			       [(symbol? obj)
-				(list 'constsym obj next)]
-			       [(string? obj)
-				(list 'conststr obj next)]
-			       [(number? obj)
-				(list 'constnum obj next)]
-			       [else
-				 (compile (eval x null-environment) e s next)])]
-		      [lambda (vars . bodies)
-			(compile-lambda e s next vars bodies)]
-                      [if (test then else)
-                        (let ([thenc (compile then e s next)]
-                              [elsec (compile else e s next)])
-                          (compile test e s (list 'test thenc elsec)))]
-                      [set! (var x)
+    [(null? x)
+     (list 'constnil x next)]
+    [(boolean? x)
+     (list 'constboo x next)]
+    [(symbol? x)
+     (compile-refer x e
+                    (if (set-member? x s)
+                      (list 'indirect next)
+                      next))]
+    [(string? x)
+     (list 'conststr x next)]
+    [(number? x)
+     (list 'constnum x next)]
+    [(pair? x)
+     (record-case x
+                  [display (x)
+                    (compile x e s (list 'display next))]
+                  [newline ()
+                    (list 'newline next)]
+                  [quote (obj)
+                         (cond
+                           [(null? x)
+                            (list 'constnil x next)]
+                           [(boolean? x)
+                            (list 'constboo x next)]
+                           [(pair? obj)
+                            (compile (letrec
+                                       ([next (lambda (args)
+                                                (if (null? args)
+                                                  '()
+                                                  (list 'cons (list 'quote (car args)) (next (cdr args)))))])
+                                       (next obj)) e s next)]
+                           [(symbol? obj)
+                            (list 'constsym obj next)]
+                           [(string? obj)
+                            (list 'conststr obj next)]
+                           [(number? obj)
+                            (list 'constnum obj next)]
+                           [else
+                             (compile (eval x null-environment) e s next)])]
+                  [lambda (vars . bodies)
+                    (compile-lambda e s next vars bodies)]
+                  [if (test then else)
+                    (let ([thenc (compile then e s next)]
+                          [elsec (compile else e s next)])
+                      (compile test e s (list 'test thenc elsec)))]
+                  [set! (var x)
                         (compile-lookup var e
                                         (lambda (n) (compile x e s (list 'assign-local n next)))
                                         (lambda (n) (compile x e s (list 'assign-free n next)))

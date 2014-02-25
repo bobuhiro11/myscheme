@@ -69,4 +69,6 @@
 (test* "#38" '(2 3)         (evaluate '(cons 2 (cons 3 '()))))
 (test* "#39" #t             (evaluate '(null? '())))
 (test* "#39" #f             (evaluate '(null? (quote (a)))))
+(test* "#40" '(a b)         (evaluate '(display (quote (a b)))))
+
 (test-end)

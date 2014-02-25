@@ -59,6 +59,8 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"shift"))		rc =  CODE_SHIFT;
 	else if(!strcmp(s,"apply"))		rc =  CODE_APPLY;
 	else if(!strcmp(s,"return"))		rc =  CODE_RETURN;
+	else if(!strcmp(s,"display"))		rc =  CODE_DISPLAY;
+	else if(!strcmp(s,"newline"))		rc =  CODE_NEWLINE;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
 	else if(!strcmp(s,"nil")
@@ -143,6 +145,7 @@ dump_code(int max)
 				case CODE_RETURN:        printf(" ;RETURN"); break;
 				case CODE_GT:        	 printf(" ;GT"); break;
 				case CODE_LT:        	 printf(" ;LT"); break;
+
 				case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
 				case CODE_TRUE:          printf(" ;TRUE"); break;
 				case CODE_FALSE:         printf(" ;FALSE"); break;
@@ -458,6 +461,12 @@ exec_code()
 			case CODE_EQUAL:
 				a = INDEX(s,0) == INDEX(s,1) ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
+			case CODE_DISPLAY:
+				write_vm_data(a);
+				break;
+			case CODE_NEWLINE:
+				printf("\n");
+				break;
 			case CODE_CONS:
 				p = malloc(sizeof(struct vm_obj));
 				p->tag = VM_OBJ_PAIR;
@@ -570,17 +579,17 @@ init_code()
 void
 ht_init(struct hashtable *table)
 {
-	ht_insert(table, "x",      123<<2);
-	ht_insert(table, "y",      256<<2);
-	ht_insert(table, "=",      create_closure(0, 1000, 1002,0));
-	ht_insert(table, "-",      create_closure(0, 1003, 1005,0));
-	ht_insert(table, "+",      create_closure(0, 1006, 1008,0));
-	ht_insert(table, ">",      create_closure(0, 1009, 1011,0));
-	ht_insert(table, "<",      create_closure(0, 1012, 1014,0));
-	ht_insert(table, "cons",   create_closure(0, 1015, 1017,0));
-	ht_insert(table, "car",    create_closure(0, 1018, 1020,0));
-	ht_insert(table, "cdr",    create_closure(0, 1021, 1023,0));
-	ht_insert(table, "null?",  create_closure(0, 1024, 1026,0));
+	ht_insert(table, "x",        123<<2);
+	ht_insert(table, "y",        256<<2);
+	ht_insert(table, "=",        create_closure(0, 1000, 1002,0));
+	ht_insert(table, "-",        create_closure(0, 1003, 1005,0));
+	ht_insert(table, "+",        create_closure(0, 1006, 1008,0));
+	ht_insert(table, ">",        create_closure(0, 1009, 1011,0));
+	ht_insert(table, "<",        create_closure(0, 1012, 1014,0));
+	ht_insert(table, "cons",     create_closure(0, 1015, 1017,0));
+	ht_insert(table, "car",      create_closure(0, 1018, 1020,0));
+	ht_insert(table, "cdr",      create_closure(0, 1021, 1023,0));
+	ht_insert(table, "null?",    create_closure(0, 1024, 1026,0));
 }
 
 int

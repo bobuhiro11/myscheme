@@ -10,6 +10,12 @@
     (record-case code
                  [halt ()
                        (list (list adr 'halt))]
+                 [newline (x)
+                              (cons (list adr 'newline)
+                                    (3imp->linear x (+ adr 1)))]
+                 [display (x)
+                              (cons (list adr 'display)
+                                    (3imp->linear x (+ adr 1)))]
                  [refer-local (n x)
                               (cons (list adr 'refer-local)
                                     (cons (list (+ adr 1) n)

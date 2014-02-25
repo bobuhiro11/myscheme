@@ -45,6 +45,8 @@
 #define CODE_CAR	      	0x1a000002
 #define CODE_CDR	      	0x1b000002
 #define CODE_IS_NULL	      	0x1c000002
+#define CODE_DISPLAY	      	0x1d000002
+#define CODE_NEWLINE	      	0x1e000002
 #define CODE_INVALID 		0xFF000002
 
 #define CODE_CONSTNIL       	0x21000002

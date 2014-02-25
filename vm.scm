@@ -461,6 +461,12 @@
                [null? ()
                      (let ([a (index argp 0)])
                        (VM (null? a) (1+ pc) f argp c s code))]
+               [display ()
+                        (display a)
+                        (VM a  (1+ pc) f argp c s code)]
+               [newline ()
+                        (newline)
+                        (VM a  (1+ pc) f argp c s code)]
                [equal ()
                      (let ([a (index argp 0)]
                            [b (index argp 1)])

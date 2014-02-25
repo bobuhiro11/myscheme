@@ -46,13 +46,12 @@
     (if (pair? x)
       (record-case x
                    [lambda (vars . bodies)
-                     ; lambda式の場合(define-macro内も含む)は，bodyのみを評価する．
-                     (append (list 'lambda vars)
-                           (map expand-traditional-macro bodies))]
+                     (append (list 'lambda (map expand-traditional-macro vars))
+                             (map expand-traditional-macro bodies))]
                    [else
                      (let ([macro (get-traditional-macro (car x))]
                            [args (map expand-traditional-macro (cdr x))])
                        (if macro
                          (apply (cdr macro) args)
-                         (cons (car x) args)))])
+                         (cons (expand-traditional-macro (car x)) args)))])
       x)))
