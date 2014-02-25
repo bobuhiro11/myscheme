@@ -288,7 +288,7 @@ exec_code()
 		// printf("pc= %d\n", pc);
 		// printf("a=");
 		// write_vm_data(a);
-		// printf("s=%d",s);
+		// printf("s=%d\n",s);
 		// printf("argp=%d",argp);
 		// printf("\n");
 		// dump_stack(10);
