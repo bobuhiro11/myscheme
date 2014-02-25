@@ -51,16 +51,16 @@
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
 
-#define is_num(x) 		((x & 3) == 0)
-#define is_true(x) 		((x - VM_DATA_TRUE) == 0)
-#define is_false(x) 		((x - VM_DATA_FALSE) == 0)
-#define is_nil(x) 		((x - VM_DATA_NIL) == 0)
-#define is_undefined(x) 	((x - VM_DATA_UNDEFINED) == 0)
-#define is_end_of_frame(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
-#define is_obj(x) 		((x&3) == 3)
-#define is_closure(x) 		((x&3) == 3 &&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
-#define closure_body(x)		(((struct vm_obj*)(x-3)) -> u.closure[0] >> 2)
-#define closure_ebody(x)	(((struct vm_obj*)(x-3)) -> u.closure[1] >> 2)
+#define IS_NUM(x) 		((x & 3) == 0)
+#define IS_TRUE(x) 		((x - VM_DATA_TRUE) == 0)
+#define IS_FALSE(x) 		((x - VM_DATA_FALSE) == 0)
+#define IS_NIL(x) 		((x - VM_DATA_NIL) == 0)
+#define IS_UNDEFINED(x) 	((x - VM_DATA_UNDEFINED) == 0)
+#define IS_END_OF_FRAME(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
+#define IS_OBJ(x) 		((x&3) == 3)
+#define IS_CLOSURE(x) 		((x&3) == 3 &&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
+#define CLOSURE_BODY(x)		(((struct vm_obj*)(x-3)) -> u.closure[0] >> 2)
+#define CLOSURE_EBODY(x)	(((struct vm_obj*)(x-3)) -> u.closure[1] >> 2)
 
 /***************************************************
  * structure definition

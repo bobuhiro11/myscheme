@@ -126,13 +126,13 @@ write_vm_data(vm_data data)
 	int64_t rc;
 	struct vm_obj *p;
 
-	if(is_num(data))		printf("%d",data>>2);
-	else if(is_true(data))		printf("#t");
-	else if(is_false(data))		printf("#f");
-	else if(is_nil(data))		printf("nil");
-	else if(is_undefined(data))	printf("undef");
-	else if(is_end_of_frame(data))	printf("end_of_frame");
-	else if(is_closure(data))	printf("lamnbda<%d,%d>",closure_body(data),closure_ebody(data));
+	if(IS_NUM(data))		printf("%d",data>>2);
+	else if(IS_TRUE(data))		printf("#t");
+	else if(IS_FALSE(data))		printf("#f");
+	else if(IS_NIL(data))		printf("nil");
+	else if(IS_UNDEFINED(data))	printf("undef");
+	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
+	else if(IS_CLOSURE(data))	printf("lamnbda<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 }
 
 /*
@@ -263,7 +263,7 @@ exec_code()
 				break;
 			case CODE_APPLY:
 				f	= s - (code[pc++] >> 2);
-				pc 	= closure_body(a);
+				pc 	= CLOSURE_BODY(a);
 				argp	= s;
 				c	= a;
 				break;
