@@ -51,6 +51,8 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"shift"))		rc =  CODE_SHIFT;
 	else if(!strcmp(s,"apply"))		rc =  CODE_APPLY;
 	else if(!strcmp(s,"return"))		rc =  CODE_RETURN;
+	else if(!strcmp(s,"gt"))		rc =  CODE_GT;
+	else if(!strcmp(s,"lt"))		rc =  CODE_LT;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
 	else if(!strcmp(s,"nil"))		rc =  CODE_NIL;
@@ -101,6 +103,12 @@ init_code()
 	code[1006] = CODE_PLUS;
 	code[1007] = CODE_RETURN;
 	code[1008] = 2<<2;
+	code[1009] = CODE_GT;
+	code[1010] = CODE_RETURN;
+	code[1011] = 2<<2;
+	code[1012] = CODE_LT;
+	code[1013] = CODE_RETURN;
+	code[1014] = 2<<2;
 }
 
 /*
@@ -112,7 +120,7 @@ dump_code(int max)
 	int i;
 	printf("**code**\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%d %016p", i, code[i]);
+		printf("%d %018p", i, code[i]);
 		switch(code[i]){
 			case CODE_HALT:		 printf(" ;HALT"); break;
 			case CODE_REFER_LOCAL:   printf(" ;REFER_LOCAL"); break;
@@ -137,6 +145,8 @@ dump_code(int max)
 			case CODE_SHIFT:         printf(" ;SHIFT"); break;
 			case CODE_APPLY:         printf(" ;APPLY"); break;
 			case CODE_RETURN:        printf(" ;RETURN"); break;
+			case CODE_GT:        	 printf(" ;GT"); break;
+			case CODE_LT:        	 printf(" ;LT"); break;
 			case CODE_TRUE:          printf(" ;TRUE"); break;
 			case CODE_FALSE:         printf(" ;FALSE"); break;
 			case CODE_NIL:           printf(" ;NIL"); break;
@@ -208,7 +218,7 @@ dump_stack(int max)
 	printf("**stack**\n");
 	for(i=0;i<STACK_MAX && i<max;i++){
 		printf("%2d ",i);
-		printf("%016p ;",stack[i]);
+		printf("%018p ;",stack[i]);
 		write_vm_data(stack[i]);
 		printf("\n");
 	}
@@ -327,6 +337,14 @@ exec_code()
 			case CODE_MINUS:
 				a = ((INDEX(s,0)>>2) - (INDEX(s,1)>>2)) << 2;
 				break;
+			case CODE_GT:
+				a = ((int)INDEX(s,0)>>2) > ((int)INDEX(s,1)>>2)
+					? VM_DATA_TRUE : VM_DATA_FALSE;
+				break;
+			case CODE_LT:
+				a = ((int)INDEX(s,0)>>2) < ((int)INDEX(s,1)>>2)
+					? VM_DATA_TRUE : VM_DATA_FALSE;
+				break;
 			case CODE_EQUAL:
 				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
@@ -395,6 +413,8 @@ ht_init(struct hashtable *table)
 	ht_insert(table, "=", create_closure(0, 1000, 1002,0));
 	ht_insert(table, "-", create_closure(0, 1003, 1005,0));
 	ht_insert(table, "+", create_closure(0, 1006, 1008,0));
+	ht_insert(table, ">", create_closure(0, 1009, 1011,0));
+	ht_insert(table, "<", create_closure(0, 1012, 1014,0));
 }
 
 int

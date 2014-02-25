@@ -39,6 +39,8 @@
 #define CODE_SHIFT       	0xFF000015
 #define CODE_APPLY       	0xFF000016
 #define CODE_RETURN      	0xFF000017
+#define CODE_GT 	      	0xFF000018
+#define CODE_LT		      	0xFF000019
 #define CODE_INVALID 		0xFFFFFFFF
 #define CODE_TRUE 		0x00000001
 #define CODE_FALSE 		0x00000009
