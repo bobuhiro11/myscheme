@@ -196,6 +196,28 @@ setbox(vm_data box, vm_data x)
 	*((vm_data*)(box-2)) = x;
 }
 
+int
+is_list(vm_data data)
+{
+	if(IS_NIL(data))	return 1;
+	else if(IS_PAIR(data))	return is_list(CDR(data));
+	else 			return 0;
+}
+
+void
+write_vm_list(vm_data data, int d)
+{
+	if(d)			printf("(");	/* first time */
+	else if(!IS_NIL(data))	printf(" "); 	/* other time */
+
+	if(IS_NIL(data)){
+		printf(")");
+	}else{
+		write_vm_data(CAR(data));
+		write_vm_list(CDR(data),0);
+	}
+}
+
 /*
  * write data to stdout
  */
@@ -216,13 +238,18 @@ write_vm_data(vm_data data)
 	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
 	else if(IS_STRING(data))	printf("\"%s\"", STRING(data));
 	else if(IS_SYMBOL(data))	printf("%s", SYMBOL(data));
-	else if(IS_PAIR(data)) { 
-		p = data-3;
-		printf("(");
-		write_vm_data(p->u.pair.car); 
-		printf(" . ");
-		write_vm_data(p->u.pair.cdr); 
-		printf(")");
+	else if(IS_PAIR(data)) {
+		if(is_list(data)){
+			write_vm_list(data,1);
+		}else{
+
+			p = data-3;
+			printf("(");
+			write_vm_data(p->u.pair.car);
+			printf(" . ");
+			write_vm_data(p->u.pair.cdr);
+			printf(")");
+		}
 	}
 }
 
