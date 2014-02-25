@@ -62,6 +62,10 @@
 #define CLOSURE_BODY(x)		(((struct vm_obj*)(x-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)(x-3)) -> u.closure[1] >> 2)
 
+#define PUSH(s,x)		(stack[s] = x, s+1)
+#define INDEX(s,n)		(stack[s-n-1])
+#define SET_INDEX(s,n,x)	(stack[s-n-1] = x)
+
 /***************************************************
  * structure definition
  ***************************************************/

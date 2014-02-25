@@ -180,7 +180,7 @@ shift_args(uint32_t n, uint32_t m, uint32_t s)
 	int i;
 	printf("n = %d, m = %d\n",n,m);
 	for(i=n-1; i>=0; i--){
-		stack[s-i-m-1] = stack[s-i-1];
+		SET_INDEX(s,i+m, INDEX(s,i));
 	}
 }
 
@@ -246,10 +246,10 @@ exec_code()
 				if(a == VM_DATA_FALSE)	pc = tmp;
 				break;
 			case CODE_PLUS:
-				a = ((stack[s-1]>>2) + (stack[s-2]>>2)) << 2;
+				a = ((INDEX(s,0)>>2) + (INDEX(s,1)>>2)) << 2;
 				break;
 			case CODE_MINUS:
-				a = ((stack[s-1]>>2) - (stack[s-2]>>2)) << 2;
+				a = ((INDEX(s,0)>>2) - (INDEX(s,1)>>2)) << 2;
 				break;
 			case CODE_EQUAL:
 				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
@@ -267,11 +267,11 @@ exec_code()
 			case CODE_NUATE:
 				break;
 			case CODE_FRAME:
-				stack[s++] = VM_DATA_END_OF_FRAME;
-				stack[s++] = code[pc++];
-				stack[s++] = c;
-				stack[s++] = argp;
-				stack[s++] = f;
+				s = PUSH(s, VM_DATA_END_OF_FRAME);
+				s = PUSH(s, code[pc++]);
+				s = PUSH(s, c);
+				s = PUSH(s, argp);
+				s = PUSH(s, f);
 				break;
 			case CODE_ARGUMENT:
 				stack[s++] = a;
@@ -291,10 +291,10 @@ exec_code()
 				break;
 			case CODE_RETURN:
 				s	= s-(code[pc++] >> 2);
-				pc 	= stack[s-4] >> 2;
-				f 	= stack[s-1];
-				argp 	= stack[s-2];
-				c 	= stack[s-3];
+				pc 	= INDEX(s,3) >> 2;
+				f 	= INDEX(s,0);
+				argp 	= INDEX(s,1);
+				c 	= INDEX(s,2);
 				s 	= s-5;
 				break;
 		}
