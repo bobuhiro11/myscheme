@@ -16,39 +16,39 @@
 #define CODE_MAX 2048
 #define STACK_MAX 1024
 
-#define CODE_HALT 		0xFF000001	/* for vm_code */
-#define CODE_REFER_LOCAL 	0xFF000002
-#define CODE_REFER_FREE		0xFF000003
-#define CODE_REFER_GLOBAL	0xFF000004
-#define CODE_INDIRECT    	0xFF000005
-#define CODE_CONSTANT    	0xFF000006
-#define CODE_CLOSE       	0xFF000007
-#define CODE_BOX         	0xFF000008
-#define CODE_TEST        	0xFF000009
-#define CODE_PLUS        	0xFF00000a
-#define CODE_MINUS       	0xFF00000b
-#define CODE_EQUAL       	0xFF00000c
-#define CODE_ASSIGN_LOCAL	0xFF00000d
-#define CODE_ASSIGN_FREE 	0xFF00000e
-#define CODE_ASSIGN_GLOBAL	0xFF00000f
-#define CODE_DEFINE      	0xFF000010
-#define CODE_CONTI       	0xFF000011
-#define CODE_NUATE       	0xFF000012
-#define CODE_FRAME       	0xFF000013
-#define CODE_ARGUMENT    	0xFF000014
-#define CODE_SHIFT       	0xFF000015
-#define CODE_APPLY       	0xFF000016
-#define CODE_RETURN      	0xFF000017
-#define CODE_GT 	      	0xFF000018
-#define CODE_LT		      	0xFF000019
-#define CODE_CONS	      	0xFF00001A
-#define CODE_CAR	      	0xFF00001B
-#define CODE_CDR	      	0xFF00001C
-#define CODE_IS_NULL	      	0xFF00001D
-#define CODE_INVALID 		0xFFFFFFFF
-#define CODE_TRUE 		0x00000001
-#define CODE_FALSE 		0x00000009
-#define CODE_NIL 		0x0000000d
+#define CODE_HALT 		0x00000002	/* for vm_code */
+#define CODE_REFER_LOCAL 	0x01000002
+#define CODE_REFER_FREE 	0x02000002
+#define CODE_REFER_GLOBAL	0x03000002
+#define CODE_INDIRECT    	0x04000002
+#define CODE_CONSTANT    	0x05000002
+#define CODE_CLOSE       	0x06000002
+#define CODE_BOX         	0x07000002
+#define CODE_TEST        	0x08000002
+#define CODE_PLUS        	0x09000002
+#define CODE_MINUS       	0x0a000002
+#define CODE_EQUAL       	0x0b000002
+#define CODE_ASSIGN_LOCAL	0x0c000002
+#define CODE_ASSIGN_FREE 	0x0d000002
+#define CODE_ASSIGN_GLOBAL	0x0e000002
+#define CODE_DEFINE      	0x0f000002
+#define CODE_CONTI       	0x10000002
+#define CODE_NUATE       	0x11000002
+#define CODE_FRAME       	0x12000002
+#define CODE_ARGUMENT    	0x13000002
+#define CODE_SHIFT       	0x14000002
+#define CODE_APPLY       	0x15000002
+#define CODE_RETURN      	0x16000002
+#define CODE_GT 	      	0x17000002
+#define CODE_LT 		0x18000002
+#define CODE_CONS	      	0x19000002
+#define CODE_CAR	      	0x1a000002
+#define CODE_CDR	      	0x1b000002
+#define CODE_IS_NULL	      	0x1c000002
+#define CODE_INVALID 		0xFF000002
+#define CODE_TRUE 		B(0001)
+#define CODE_FALSE 		B(1001)
+#define CODE_NIL 		B(1101)
 
 #define VM_DATA_TRUE		B(00101)	/* for vm_data */
 #define VM_DATA_FALSE		B(01001)
@@ -65,6 +65,13 @@
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
+
+#define IS_CODE_NUMBER(x)	((x & 3) == 0)
+#define IS_CODE_TRUE(x)		((x & 0xF) == 1)
+#define IS_CODE_FALSE(x)	((x & 0xF) == 9)
+#define IS_CODE_NIL(x)		((x & 0xF) == 13)
+#define IS_CODE_STRING(x)	((x & 0x3) == 3)
+#define IS_CODE_CODE(x)		((x & 3) == 2)
 
 #define IS_NUM(x) 		((x & 3) == 0)
 #define IS_TRUE(x) 		((x - VM_DATA_TRUE) == 0)

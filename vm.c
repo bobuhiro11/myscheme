@@ -102,37 +102,50 @@ dump_code(int max)
 	int i;
 	printf("=== code ===\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%d %018p", i, code[i]);
-		switch(code[i]){
-			case CODE_HALT:		 printf(" ;HALT"); break;
-			case CODE_REFER_LOCAL:   printf(" ;REFER_LOCAL"); break;
-			case CODE_REFER_FREE:    printf(" ;REFER_FREE"); break;
-			case CODE_REFER_GLOBAL:  printf(" ;REFER_GLOBAL"); break;
-			case CODE_INDIRECT:      printf(" ;INDIRECT"); break;
-			case CODE_CONSTANT:      printf(" ;CONSTANT"); break;
-			case CODE_CLOSE:         printf(" ;CLOSE"); break;
-			case CODE_BOX:           printf(" ;BOX"); break;
-			case CODE_TEST:          printf(" ;TEST"); break;
-			case CODE_PLUS:          printf(" ;PLUS"); break;
-			case CODE_MINUS:         printf(" ;MINUS"); break;
-			case CODE_EQUAL:         printf(" ;EQUAL"); break;
-			case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
-			case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
-			case CODE_ASSIGN_GLOBAL: printf(" ;ASSIGN_GLOBAL"); break;
-			case CODE_DEFINE:        printf(" ;DEFINE"); break;
-			case CODE_CONTI:         printf(" ;CONTI"); break;
-			case CODE_NUATE:         printf(" ;NUATE"); break;
-			case CODE_FRAME:         printf(" ;FRAME"); break;
-			case CODE_ARGUMENT:      printf(" ;ARGUMEMT"); break;
-			case CODE_SHIFT:         printf(" ;SHIFT"); break;
-			case CODE_APPLY:         printf(" ;APPLY"); break;
-			case CODE_RETURN:        printf(" ;RETURN"); break;
-			case CODE_GT:        	 printf(" ;GT"); break;
-			case CODE_LT:        	 printf(" ;LT"); break;
-			case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
-			case CODE_TRUE:          printf(" ;TRUE"); break;
-			case CODE_FALSE:         printf(" ;FALSE"); break;
-			case CODE_NIL:           printf(" ;NIL"); break;
+		printf("%2d %018p", i, code[i]);
+
+		if(IS_CODE_CODE(code[i])){
+			switch(code[i]){
+				case CODE_HALT:		 printf(" ;HALT"); break;
+				case CODE_REFER_LOCAL:   printf(" ;REFER_LOCAL"); break;
+				case CODE_REFER_FREE:    printf(" ;REFER_FREE"); break;
+				case CODE_REFER_GLOBAL:  printf(" ;REFER_GLOBAL"); break;
+				case CODE_INDIRECT:      printf(" ;INDIRECT"); break;
+				case CODE_CONSTANT:      printf(" ;CONSTANT"); break;
+				case CODE_CLOSE:         printf(" ;CLOSE"); break;
+				case CODE_BOX:           printf(" ;BOX"); break;
+				case CODE_TEST:          printf(" ;TEST"); break;
+				case CODE_PLUS:          printf(" ;PLUS"); break;
+				case CODE_MINUS:         printf(" ;MINUS"); break;
+				case CODE_EQUAL:         printf(" ;EQUAL"); break;
+				case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
+				case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
+				case CODE_ASSIGN_GLOBAL: printf(" ;ASSIGN_GLOBAL"); break;
+				case CODE_DEFINE:        printf(" ;DEFINE"); break;
+				case CODE_CONTI:         printf(" ;CONTI"); break;
+				case CODE_NUATE:         printf(" ;NUATE"); break;
+				case CODE_FRAME:         printf(" ;FRAME"); break;
+				case CODE_ARGUMENT:      printf(" ;ARGUMEMT"); break;
+				case CODE_SHIFT:         printf(" ;SHIFT"); break;
+				case CODE_APPLY:         printf(" ;APPLY"); break;
+				case CODE_RETURN:        printf(" ;RETURN"); break;
+				case CODE_GT:        	 printf(" ;GT"); break;
+				case CODE_LT:        	 printf(" ;LT"); break;
+				case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
+				case CODE_TRUE:          printf(" ;TRUE"); break;
+				case CODE_FALSE:         printf(" ;FALSE"); break;
+				case CODE_NIL:           printf(" ;NIL"); break;
+			}
+		}else if(IS_CODE_NUMBER(code[i])){
+			printf(" ;%d", code[i] >> 2);
+		}else if(IS_CODE_STRING(code[i])){
+			printf(" ;%s", code[i] - 3);
+		}else if(IS_CODE_NIL(code[i])){
+			printf(" ;NIL");
+		}else if(IS_CODE_TRUE(code[i])){
+			printf(" ;TRUE");
+		}else if(IS_CODE_FALSE(code[i])){
+			printf(" ;FALSE");
 		}
 		printf("\n");
 	}
