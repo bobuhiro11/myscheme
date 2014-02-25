@@ -18,6 +18,8 @@ vm_data stack[STACK_MAX];
 
 struct hashtable *global_table;
 
+int rom_last_address;
+
 /*
  * translate code(string) to code(vm_code)
  */
@@ -89,6 +91,7 @@ get_code()
 		c = get_vm_code(s);
 		code[i] = c;
 	}
+	rom_last_address = i;
 }
 
 void
@@ -266,6 +269,56 @@ shift_args(uint32_t n, uint32_t m, uint32_t s)
 }
 
 /*
+ * save stack
+ */
+vm_data
+save_stack(int s)
+{
+	int i;
+	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
+	obj->tag = VM_OBJ_STACK;
+	obj->u.stack.size = s;
+	obj->u.stack.p = malloc(sizeof(vm_data) * s);
+	for(i=0;i<s;i++){
+		obj->u.stack.p[i] = stack[i];
+	}
+	return ((uint64_t)obj) | 3;
+}
+
+int
+restore_stack(vm_data x)
+{
+	int i,n;
+	struct vm_obj *obj = x-3;
+
+	if(!IS_STACK(x)){
+		fprintf(stderr, "Error: this is not stack object.\n");
+	}
+
+	n = obj->u.stack.size;
+	for(i=0;i<n;i++){
+		stack[i] = obj->u.stack.p[i];
+	}
+	return n;
+}
+
+/*
+ * insert codes for continue and update rom last address
+ */
+void
+insert_continuation_code(int s)
+{
+	code[rom_last_address + 1] = CODE_REFER_LOCAL;
+	code[rom_last_address + 2] = 0;
+	code[rom_last_address + 3] = CODE_NUATE;
+	code[rom_last_address + 4] = save_stack(s);
+	code[rom_last_address + 5] = CODE_RETURN;
+	code[rom_last_address + 6] = 0;
+
+	rom_last_address += 6;
+}
+
+/*
  * execute code stored in variable code
  * and return last accumlator value
  */
@@ -362,8 +415,12 @@ exec_code()
 				assign_global(tmp-3, a);
 				break;
 			case CODE_CONTI:
+				a = create_closure(0,rom_last_address+1,rom_last_address+6,0);
+				insert_continuation_code(s);
 				break;
 			case CODE_NUATE:
+				tmp  = code[pc++];	/* stack	*/
+				s = restore_stack(tmp);
 				break;
 			case CODE_FRAME:
 				s = PUSH(s, VM_DATA_END_OF_FRAME);

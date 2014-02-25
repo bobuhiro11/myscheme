@@ -56,6 +56,7 @@
 
 #define VM_OBJ_STR		0x01 		/* for tag of struct vm_obj */
 #define VM_OBJ_CLOSURE		0x02
+#define VM_OBJ_STACK		0x03
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
@@ -69,6 +70,7 @@
 #define IS_OBJ(x) 		(((x)&3)==3)
 #define IS_BOX(x) 		(((x)&3)==2)
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
+#define IS_STACK(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STACK)
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
 #define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
@@ -89,6 +91,10 @@ struct vm_obj
 	union{
 		char *str;
 		vm_data *closure;
+		struct {
+			vm_data *p;
+			int size;
+		} stack;
 	} u;
 };
 
