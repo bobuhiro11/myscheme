@@ -57,7 +57,8 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"lt"))		rc =  CODE_LT;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
-	else if(!strcmp(s,"nil"))		rc =  CODE_NIL;
+	else if(!strcmp(s,"nil")
+			||!strcmp(s,"()"))	rc =  CODE_NIL;
 	else{
 		val = strtol(s, &endp, 10);
 		if(*endp == '\0'){ 			/* number */
@@ -204,7 +205,7 @@ write_vm_data(vm_data data)
 	if(IS_NUM(data))		printf("%d",data>>2);
 	else if(IS_TRUE(data))		printf("#t");
 	else if(IS_FALSE(data))		printf("#f");
-	else if(IS_NIL(data))		printf("nil");
+	else if(IS_NIL(data))		printf("()");
 	else if(IS_UNDEFINED(data))	printf("undef");
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
 	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
