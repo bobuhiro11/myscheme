@@ -592,18 +592,29 @@ ht_init(struct hashtable *table)
 	ht_insert(table, "null?",    create_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
 }
 
+void
+dump_info()
+{
+	printf("=== INFO ===\n");
+	printf("CODE_MAX:       %7d\n",CODE_MAX);
+	printf("HEAP_CODE_BASE: %7d\n",HEAP_CODE_BASE);
+	printf("STACK_MAX:      %7d\n",STACK_MAX);
+}
+
 int
 main(int argc, char **argv)
 {
 	vm_data rc;
 
+	dump_info();
+
 	global_table = ht_create();
 	ht_init(global_table);
-
 	ht_dump(global_table);
 
 	init_code();
 	get_code();
+
 	dump_code(10);
 	rc = exec_code();
 	printf("=== result ===\n");
