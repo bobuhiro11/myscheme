@@ -6,4 +6,4 @@
                      (if (= x 0)
                        (cons 0 '())
                        (cons x (makelist (- x 1)))))])
-  (reverse (quote (1 1 2 3 5 8)) ()))
+  (reverse (quote (1 #t a b c (1 2 "hello world"))) ()))

@@ -35,7 +35,13 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"refer-free"))	rc =  CODE_REFER_FREE;
 	else if(!strcmp(s,"refer-global"))	rc =  CODE_REFER_GLOBAL;
 	else if(!strcmp(s,"indirect"))		rc =  CODE_INDIRECT;
-	else if(!strcmp(s,"constant"))		rc =  CODE_CONSTANT;
+
+	else if(!strcmp(s,"constnil"))		rc =  CODE_CONSTNIL;
+	else if(!strcmp(s,"constnum"))		rc =  CODE_CONSTNUM;
+	else if(!strcmp(s,"conststr"))		rc =  CODE_CONSTSTR;
+	else if(!strcmp(s,"constboo"))		rc =  CODE_CONSTBOO;
+	else if(!strcmp(s,"constsym"))		rc =  CODE_CONSTSYM;
+
 	else if(!strcmp(s,"close"))		rc =  CODE_CLOSE;
 	else if(!strcmp(s,"box"))		rc =  CODE_BOX;
 	else if(!strcmp(s,"test"))		rc =  CODE_TEST;
@@ -111,7 +117,13 @@ dump_code(int max)
 				case CODE_REFER_FREE:    printf(" ;REFER_FREE"); break;
 				case CODE_REFER_GLOBAL:  printf(" ;REFER_GLOBAL"); break;
 				case CODE_INDIRECT:      printf(" ;INDIRECT"); break;
-				case CODE_CONSTANT:      printf(" ;CONSTANT"); break;
+
+				case CODE_CONSTNUM:      printf(" ;CONSTNUM"); break;
+				case CODE_CONSTSTR:      printf(" ;CONSTSTR"); break;
+				case CODE_CONSTSYM:      printf(" ;CONSTSYM"); break;
+				case CODE_CONSTNIL:      printf(" ;CONSTNIL"); break;
+				case CODE_CONSTBOO:      printf(" ;CONSTBOO"); break;
+
 				case CODE_CLOSE:         printf(" ;CLOSE"); break;
 				case CODE_BOX:           printf(" ;BOX"); break;
 				case CODE_TEST:          printf(" ;TEST"); break;
@@ -202,6 +214,8 @@ write_vm_data(vm_data data)
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
 	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
+	else if(IS_STRING(data))	printf("\"%s\"", STRING(data));
+	else if(IS_SYMBOL(data))	printf("%s", SYMBOL(data));
 	else if(IS_PAIR(data)) { 
 		p = data-3;
 		printf("(");
@@ -363,13 +377,27 @@ exec_code()
 			case CODE_INDIRECT:
 				a = unbox(a);
 				break;
-			case CODE_CONSTANT:
-				tmp = code[pc++];
-				if((tmp & 3) == 0)		a = tmp;
-				else if(tmp == CODE_TRUE)	a = VM_DATA_TRUE;
-				else if(tmp  == CODE_FALSE)	a = VM_DATA_FALSE;
-				else if(tmp == CODE_NIL)	a = VM_DATA_NIL;
-				else				tmp = tmp;
+			case CODE_CONSTNUM:
+				a = code[pc++];
+				break;
+			case CODE_CONSTSTR:
+				p = malloc(sizeof(struct vm_obj));
+				p->tag = VM_OBJ_STRING;
+				p->u.string = (code[pc++] - 3);
+				a = (vm_data)p | 3;
+				break;
+			case CODE_CONSTSYM:
+				p = malloc(sizeof(struct vm_obj));
+				p->tag = VM_OBJ_SYMBOL;
+				p->u.symbol = (code[pc++] - 3);
+				a = (vm_data)p | 3;
+				break;
+			case CODE_CONSTNIL:
+				pc++;
+				a = VM_DATA_NIL;
+				break;
+			case CODE_CONSTBOO:
+				a = code[pc++] == CODE_TRUE ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_CLOSE:
 				tmp  = code[pc++] >> 2;	/* n		*/

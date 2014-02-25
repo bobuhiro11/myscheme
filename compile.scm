@@ -236,31 +236,31 @@
               (list 'conststr x next)]
         [(number? x)
               (list 'constnum x next)]
-        [(pair? x)
-         (record-case x
+	[(pair? x)
+	 (record-case x
 		      [quote (obj)
-                 (cond
-                   [(null? x)
-                    (list 'constnil x next)]
-                   [(boolean? x)
-                    (list 'constboo x next)]
-                   [(pair? obj)
-                    (compile (letrec
-                               ([next (lambda (args)
-                                        (if (null? args)
-                                          '()
-                                          (list 'cons (list 'quote (car args)) (next (cdr args)))))])
-                               (next obj)) e s next)]
-                   [(symbol? obj)
-                    (list 'constsym obj next)]
-                   [(string? obj)
-                    (list 'conststr obj next)]
-                   [(number? obj)
-                    (list 'constnum obj next)]
-                   [else
-                     (compile (eval x null-environment) e s next)])]
-          [lambda (vars . bodies)
-            (compile-lambda e s next vars bodies)]
+			     (cond
+			       [(null? x)
+				(list 'constnil x next)]
+			       [(boolean? x)
+				(list 'constboo x next)]
+			       [(pair? obj)
+				(compile (letrec
+					   ([next (lambda (args)
+						    (if (null? args)
+						      '()
+						      (list 'cons (list 'quote (car args)) (next (cdr args)))))])
+					   (next obj)) e s next)]
+			       [(symbol? obj)
+				(list 'constsym obj next)]
+			       [(string? obj)
+				(list 'conststr obj next)]
+			       [(number? obj)
+				(list 'constnum obj next)]
+			       [else
+				 (compile (eval x null-environment) e s next)])]
+		      [lambda (vars . bodies)
+			(compile-lambda e s next vars bodies)]
                       [if (test then else)
                         (let ([thenc (compile then e s next)]
                               [elsec (compile else e s next)])

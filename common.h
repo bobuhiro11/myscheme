@@ -46,6 +46,13 @@
 #define CODE_CDR	      	0x1b000002
 #define CODE_IS_NULL	      	0x1c000002
 #define CODE_INVALID 		0xFF000002
+
+#define CODE_CONSTNIL       	0x21000002
+#define CODE_CONSTBOO       	0x22000002
+#define CODE_CONSTSYM       	0x23000002
+#define CODE_CONSTSTR       	0x24000002
+#define CODE_CONSTNUM       	0x25000002
+
 #define CODE_TRUE 		B(0001)
 #define CODE_FALSE 		B(1001)
 #define CODE_NIL 		B(1101)
@@ -58,10 +65,11 @@
 #define VM_DATA_UNBOUND		B(11001)
 #define VM_DATA_END_OF_FRAME	B(11101)
 
-#define VM_OBJ_STR		0x01 		/* for tag of struct vm_obj */
+#define VM_OBJ_STRING		0x01 		/* for tag of struct vm_obj */
 #define VM_OBJ_CLOSURE		0x02
 #define VM_OBJ_STACK		0x03
 #define VM_OBJ_PAIR		0x04
+#define VM_OBJ_SYMBOL		0x05
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
@@ -84,6 +92,8 @@
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
 #define IS_STACK(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STACK)
 #define IS_PAIR(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_PAIR)
+#define IS_STRING(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STRING)
+#define IS_SYMBOL(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_SYMBOL)
 
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
@@ -91,6 +101,9 @@
 
 #define CAR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.car)
 #define CDR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.cdr)
+
+#define STRING(x)		(((struct vm_obj*)((x)-3)) -> u.string)
+#define SYMBOL(x)		(((struct vm_obj*)((x)-3)) -> u.symbol)
 
 #define PUSH(s,x)		(stack[s] = x, (s)+1)
 #define INDEX(s,n)		(stack[(s)-(n)-1])
@@ -106,7 +119,8 @@ struct vm_obj
 {
 	unsigned char tag;
 	union{
-		char *str;
+		char *string;
+		char *symbol;
 		vm_data *closure;
 		struct {
 			vm_data *p;
