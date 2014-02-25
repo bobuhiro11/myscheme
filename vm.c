@@ -116,6 +116,12 @@ dump_code(int max)
 	}
 }
 
+void
+assign_global(const char *s,vm_data data)
+{
+	ht_insert(global_table, s, data);
+}
+
 vm_data
 box(vm_data x)
 {
@@ -304,8 +310,9 @@ exec_code()
 				setbox(CLOSURE_INDEX(c,tmp), a);
 				break;
 			case CODE_ASSIGN_GLOBAL:
-				break;
 			case CODE_DEFINE:
+				tmp  = code[pc++];	/* n		*/
+				assign_global(tmp-3, a);
 				break;
 			case CODE_CONTI:
 				break;
