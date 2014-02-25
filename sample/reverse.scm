@@ -6,4 +6,4 @@
                      (if (= x 0)
                        (cons 0 '())
                        (cons x (makelist (- x 1)))))])
-  (reverse (makelist 10) '()))
+  (reverse (quote (1 1 2 3 5 8)) ()))

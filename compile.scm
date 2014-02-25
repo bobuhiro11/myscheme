@@ -229,8 +229,16 @@
                           next))]
         [(pair? x)
          (record-case x
-                      [quote (obj) (list 'constant obj next)]
-                      [lambda (vars . bodies)
+		      [quote (obj)
+			     (if (pair? obj)
+			       (compile (letrec
+					  ([next (lambda (args)
+						   (if (null? args)
+						     '()
+						     (list 'cons (car args) (next (cdr args)))))])
+					  (next obj)) e s next)
+			       (list 'constant obj next))]
+		      [lambda (vars . bodies)
                         (compile-lambda e s next vars bodies)]
                       [if (test then else)
                         (let ([thenc (compile then e s next)]
