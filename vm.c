@@ -216,7 +216,7 @@ exec_code()
 			case CODE_HALT:
 				return a;
 			case CODE_REFER_LOCAL:
-				a = stack[argp-(code[pc++]>>2)-1];
+				a = INDEX(argp, code[pc++]>>2);
 				break;
 			case CODE_REFER_FREE:
 				break;

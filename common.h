@@ -57,14 +57,14 @@
 #define IS_NIL(x) 		((x - VM_DATA_NIL) == 0)
 #define IS_UNDEFINED(x) 	((x - VM_DATA_UNDEFINED) == 0)
 #define IS_END_OF_FRAME(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
-#define IS_OBJ(x) 		((x&3) == 3)
-#define IS_CLOSURE(x) 		((x&3) == 3 &&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
-#define CLOSURE_BODY(x)		(((struct vm_obj*)(x-3)) -> u.closure[0] >> 2)
-#define CLOSURE_EBODY(x)	(((struct vm_obj*)(x-3)) -> u.closure[1] >> 2)
+#define IS_OBJ(x) 		(((x)&3)==3)
+#define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
+#define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
+#define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
 
-#define PUSH(s,x)		(stack[s] = x, s+1)
-#define INDEX(s,n)		(stack[s-n-1])
-#define SET_INDEX(s,n,x)	(stack[s-n-1] = x)
+#define PUSH(s,x)		(stack[s] = x, (s)+1)
+#define INDEX(s,n)		(stack[(s)-(n)-1])
+#define SET_INDEX(s,n,x)	(stack[(s)-(n)-1] = x)
 
 /***************************************************
  * structure definition
