@@ -112,7 +112,36 @@ dump_code(int max)
 	int i;
 	printf("**code**\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%d %p\n", i, code[i]);
+		printf("%d %016p", i, code[i]);
+		switch(code[i]){
+			case CODE_HALT:		 printf(" ;HALT"); break;
+			case CODE_REFER_LOCAL:   printf(" ;REFER_LOCAL"); break;
+			case CODE_REFER_FREE:    printf(" ;REFER_FREE"); break;
+			case CODE_REFER_GLOBAL:  printf(" ;REFER_GLOBAL"); break;
+			case CODE_INDIRECT:      printf(" ;INDIRECT"); break;
+			case CODE_CONSTANT:      printf(" ;CONSTANT"); break;
+			case CODE_CLOSE:         printf(" ;CLOSE"); break;
+			case CODE_BOX:           printf(" ;BOX"); break;
+			case CODE_TEST:          printf(" ;TEST"); break;
+			case CODE_PLUS:          printf(" ;PLUS"); break;
+			case CODE_MINUS:         printf(" ;MINUS"); break;
+			case CODE_EQUAL:         printf(" ;EQUAL"); break;
+			case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
+			case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
+			case CODE_ASSIGN_GLOBAL: printf(" ;ASSIGN_GLOBAL"); break;
+			case CODE_DEFINE:        printf(" ;DEFINE"); break;
+			case CODE_CONTI:         printf(" ;CONTI"); break;
+			case CODE_NUATE:         printf(" ;NUATE"); break;
+			case CODE_FRAME:         printf(" ;FRAME"); break;
+			case CODE_ARGUMENT:      printf(" ;ARGUMEMT"); break;
+			case CODE_SHIFT:         printf(" ;SHIFT"); break;
+			case CODE_APPLY:         printf(" ;APPLY"); break;
+			case CODE_RETURN:        printf(" ;RETURN"); break;
+			case CODE_TRUE:          printf(" ;TRUE"); break;
+			case CODE_FALSE:         printf(" ;FALSE"); break;
+			case CODE_NIL:           printf(" ;NIL"); break;
+		}
+		printf("\n");
 	}
 }
 
@@ -165,7 +194,7 @@ write_vm_data(vm_data data)
 	else if(IS_NIL(data))		printf("nil");
 	else if(IS_UNDEFINED(data))	printf("undef");
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
-	else if(IS_CLOSURE(data))	printf("lamnbda<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
+	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
 }
 
@@ -179,6 +208,7 @@ dump_stack(int max)
 	printf("**stack**\n");
 	for(i=0;i<STACK_MAX && i<max;i++){
 		printf("%2d ",i);
+		printf("%016p ;",stack[i]);
 		write_vm_data(stack[i]);
 		printf("\n");
 	}
