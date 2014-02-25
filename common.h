@@ -61,6 +61,7 @@
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
+#define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
 
 #define PUSH(s,x)		(stack[s] = x, (s)+1)
 #define INDEX(s,n)		(stack[(s)-(n)-1])
@@ -94,7 +95,7 @@ void get_code();
 void dump_code(int max);
 void write_vm_data(vm_data data);
 void dump_stack(int max);
-vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s);
+vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s);
 vm_data exec_code();
 
 vm_data ht_insert(struct hashtable *table, const char *key, vm_data data);

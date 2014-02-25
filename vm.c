@@ -160,13 +160,21 @@ dump_stack(int max)
  *
  */
 vm_data
-create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
+create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s)
 {
-	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
+	struct vm_obj *obj;
+	int i;
+	
+	obj = malloc(sizeof(struct vm_obj));
 	obj->tag 	   = VM_OBJ_CLOSURE;
 	obj->u.closure     = malloc(sizeof(vm_data) * (n+2));
 	obj->u.closure[0]  = bodyadr << 2;
 	obj->u.closure[1]  = ebodyadr << 2;
+
+	for(i=0;i<n;i++){
+		obj->u.closure[i+2] = INDEX(s,i);
+	}
+
 	return ((uint64_t)obj) | 3;
 }
 
@@ -204,13 +212,13 @@ exec_code()
 	a = c = VM_DATA_UNDEFINED;
 
 	for(;;){
-		//printf("pc= %d\n", pc);
-		//printf("a=");
-		//write_vm_data(a);
-		//printf("s=%d",s);
-		//printf("argp=%d",argp);
-		//printf("\n");
-		//dump_stack(10);
+		printf("pc= %d\n", pc);
+		printf("a=");
+		write_vm_data(a);
+		printf("s=%d",s);
+		printf("argp=%d",argp);
+		printf("\n");
+		dump_stack(10);
 
 		switch(code[pc++]){
 			case CODE_HALT:
@@ -219,6 +227,7 @@ exec_code()
 				a = INDEX(argp, code[pc++]>>2);
 				break;
 			case CODE_REFER_FREE:
+				a = CLOSURE_INDEX(c, code[pc++]>>2);
 				break;
 			case CODE_REFER_GLOBAL:
 				a = ht_find(global_table, code[pc++]-3);
@@ -238,6 +247,7 @@ exec_code()
 				tmp2 = code[pc++] >> 2;	/* bodyadr 	*/
 				tmp3 = code[pc++] >> 2;	/* ebodyadr	*/
 				a = create_closure(tmp, tmp2, tmp3, s);
+				s -= tmp;
 				break;
 			case CODE_BOX:
 				break;
