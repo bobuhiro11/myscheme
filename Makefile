@@ -1,6 +1,6 @@
 CC  					:= gcc
 CFLAGS     		:= -g -w
-TARGET				:= myscm
+TARGET				:= myscmvm
 
 SOURCES_C     := vm.c hashtable.c
 

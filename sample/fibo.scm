@@ -1,7 +1,5 @@
 (letrec ([fib (lambda (n)
-                (if (= n 0)
+                (if (< n 2)
                   1
-                  (if (= n 1)
-                    1
-                    (+ (fib (- n 1)) (fib (- n 2))))))])
-  (fib 5))
+                  (+ (fib (- n 1)) (fib (- n 2)))))])
+(fib 5))
