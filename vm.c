@@ -170,6 +170,20 @@ create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, uint32_t s)
 	return ((uint64_t)obj) | 3;
 }
 
+
+/*
+ * shift n elements of stack top
+ */
+void
+shift_args(uint32_t n, uint32_t m, uint32_t s)
+{
+	int i;
+	printf("n = %d, m = %d\n",n,m);
+	for(i=n-1; i>=0; i--){
+		stack[s-i-m-1] = stack[s-i-1];
+	}
+}
+
 /*
  * execute code stored in variable code
  * and return last accumlator value
@@ -190,16 +204,19 @@ exec_code()
 	a = c = VM_DATA_UNDEFINED;
 
 	for(;;){
-		printf("pc= %d\n", pc);
-		printf("a=");
-		write_vm_data(a);
-		printf("\n");
+		//printf("pc= %d\n", pc);
+		//printf("a=");
+		//write_vm_data(a);
+		//printf("s=%d",s);
+		//printf("argp=%d",argp);
+		//printf("\n");
+		//dump_stack(10);
 
 		switch(code[pc++]){
 			case CODE_HALT:
 				return a;
 			case CODE_REFER_LOCAL:
-				a = stack[s-(code[pc++]>>2)-1];
+				a = stack[argp-(code[pc++]>>2)-1];
 				break;
 			case CODE_REFER_FREE:
 				break;
@@ -260,6 +277,11 @@ exec_code()
 				stack[s++] = a;
 				break;
 			case CODE_SHIFT:
+				tmp  = code[pc++]>>2;	/* n	*/
+				tmp2 = code[pc++]>>2;	/* m	*/
+				shift_args(tmp, tmp2, s);
+				argp += tmp - tmp2;
+				s    -= tmp2;
 				break;
 			case CODE_APPLY:
 				f	= s - (code[pc++] >> 2);
