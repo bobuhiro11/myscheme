@@ -110,7 +110,9 @@
         '(y . 256)
         '(= . #(1000))
         '(- . #(1003))
-        '(+ . #(1006))))
+        '(+ . #(1006))
+        '(> . #(1009))
+        '(< . #(1012))))
 
 ;; (refer-global 'x)
 ;;
@@ -153,7 +155,8 @@
   (lambda (x)
     (- x 1)))
 
-(define lst-index 
+;; 見つからなければ，#f
+(define lst-index
   (lambda (lst i)
     (if (null? lst)
       #f
@@ -161,20 +164,25 @@
         (car lst)
         (lst-index (cdr lst) i)))))
 
+
 ;; closureや組み込み関数のための命令コード領域
 ;; 普通の命令とはアドレス領域を区別する．
 (define *ram-code*
-  (list 
-    '(1000 equal)
-    '(1001 return)
-    '(1002 2)
-    '(1003 minus)
-    '(1004 return)
-    '(1005 2)
-    '(1006 plus)
-    '(1007 return)
-    '(1008 2)))
-
+  '((#x3E8 equal)
+    (#x3E9 return)
+    (#x3EA 2)
+    (#x3EB minus)
+    (#x3EC return)
+    (#x3ED 2)
+    (#x3EE plus)
+    (#x3EF return)
+    (#x3F0 2)
+    (#x3F1 gt)
+    (#x3F2 return)
+    (#x3F3 2)
+    (#x3F4 lt)
+    (#x3F5 return)
+    (#x3F6 2)))
 
 ;; アドレスからコードを得る
 (define code-index
@@ -366,6 +374,8 @@
   ;(display "argp=") (display argp) (newline)
   (record-case ;(cdr (code-index code pc)) ; 先頭にはアドレスがある
                (let ([x (code-index code pc)])
+                 (unless x
+                   (display (format #f "cannot find code adr = ~D" pc)))
                  (cdr x))
                [halt () a]
                [refer-local ()
@@ -402,6 +412,14 @@
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
                        (VM (- a b) (1+ pc) f argp c s code))]
+               [gt ()
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (> a b) (1+ pc) f argp c s code))]
+               [lt ()
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (< a b) (1+ pc) f argp c s code))]
                [equal ()
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
