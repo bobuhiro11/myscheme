@@ -58,6 +58,7 @@
 #define IS_UNDEFINED(x) 	((x - VM_DATA_UNDEFINED) == 0)
 #define IS_END_OF_FRAME(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
 #define IS_OBJ(x) 		(((x)&3)==3)
+#define IS_BOX(x) 		(((x)&3)==2)
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)

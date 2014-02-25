@@ -116,6 +116,33 @@ dump_code(int max)
 	}
 }
 
+vm_data
+box(vm_data x)
+{
+	vm_data *p = malloc(sizeof(vm_data));
+	*p = x;
+	return ((vm_data)p) | 2;
+}
+
+vm_data
+unbox(vm_data x)
+{
+	if(IS_BOX(x)){
+		return *((vm_data*)(x-2));
+	}else{
+		fprintf(stderr, "Error: this is not box.\n");
+		return VM_DATA_UNDEFINED;
+	}
+}
+
+void
+setbox(vm_data box, vm_data x)
+{
+	if(!IS_BOX(box))
+		fprintf(stderr, "Error: this is not box.\n");
+	*((vm_data*)(box-2)) = x;
+}
+
 /*
  * write data to stdout
  */
@@ -133,6 +160,7 @@ write_vm_data(vm_data data)
 	else if(IS_UNDEFINED(data))	printf("undef");
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
 	else if(IS_CLOSURE(data))	printf("lamnbda<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
+	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
 }
 
 /*
@@ -233,6 +261,7 @@ exec_code()
 				a = ht_find(global_table, code[pc++]-3);
 				break;
 			case CODE_INDIRECT:
+				a = unbox(a);
 				break;
 			case CODE_CONSTANT:
 				tmp = code[pc++];
@@ -250,6 +279,8 @@ exec_code()
 				s -= tmp;
 				break;
 			case CODE_BOX:
+				tmp  = code[pc++] >> 2;	/* n		*/
+				SET_INDEX(s, tmp, box( INDEX(s, tmp)));
 				break;
 			case CODE_TEST:
 				tmp  = code[pc++] >> 2;	/* else adr	*/
@@ -265,6 +296,8 @@ exec_code()
 				a = stack[s-1] == stack[s-2] ? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_ASSIGN_LOCAL:
+				tmp  = code[pc++] >> 2;	/* n		*/
+				setbox(INDEX(argp, tmp), a);
 				break;
 			case CODE_ASSIGN_FREE:
 				break;
@@ -284,7 +317,7 @@ exec_code()
 				s = PUSH(s, f);
 				break;
 			case CODE_ARGUMENT:
-				stack[s++] = a;
+				s = PUSH(s, a);
 				break;
 			case CODE_SHIFT:
 				tmp  = code[pc++]>>2;	/* n	*/
