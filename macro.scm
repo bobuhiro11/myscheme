@@ -4,7 +4,7 @@
 
 (load "./util.scm")
 
-(define *traditional-macros* 
+(define *traditional-macros*
   (list
     (cons 'begin (lambda exps (list (append (list 'lambda '()) exps))))
     (cons 'let   (lambda (binds . bodies)
@@ -17,11 +17,18 @@
                     (let ([vars (map (lambda (x) (car x)) args)]
                           [vals (map (lambda (x) (cadr x)) args)])
                       (append (list (append (list 'lambda vars)
-                                            (map (lambda (x) (list 'set! (car x) (cadr x))) 
+                                            (map (lambda (x) (list 'set! (car x) (cadr x)))
                                                  args)
                                             bodies
                                             ))
-                              (map (lambda (x) 0) args)))))))
+                              (map (lambda (x) 0) args)))))
+    (cons 'list (lambda args
+                  (letrec ([next (lambda (args)
+                                  (if (null? args)
+                                    '()
+                                    (list 'cons (car args) (next (cdr args)))))])
+                    (next args))))))
+
 
 ;; (get-traditional-macro 'double)
 ;;
