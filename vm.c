@@ -246,13 +246,13 @@ exec_code()
 	a = c = VM_DATA_UNDEFINED;
 
 	for(;;){
-		printf("pc= %d\n", pc);
-		printf("a=");
-		write_vm_data(a);
-		printf("s=%d",s);
-		printf("argp=%d",argp);
-		printf("\n");
-		dump_stack(10);
+		// printf("pc= %d\n", pc);
+		// printf("a=");
+		// write_vm_data(a);
+		// printf("s=%d",s);
+		// printf("argp=%d",argp);
+		// printf("\n");
+		// dump_stack(10);
 
 		switch(code[pc++]){
 			case CODE_HALT:

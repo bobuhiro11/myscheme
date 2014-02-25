@@ -49,20 +49,8 @@
 (test* "#23" '()            (evaluate '(define-macro double
                                                           (lambda (x)
                                                             (list '+ x x)))))
-(test* "#24" '()            (evaluate '(define-macro begin
-                                                          (lambda exps
-                                                            (list (append (list 'lambda '())
-                                      exps))))))
 (test* "#25" 20             (evaluate '(double 10)))
 (test* "#26" 30             (evaluate '(begin 10 20 30)))
-
-(test* "#27" '() (evaluate '(define-macro let
-                                               (lambda (binds . bodies)
-                                                 (cons (append (list 'lambda
-                                                                     (map (lambda (x) (car x))
-                                                                          binds))
-                                                               bodies)
-                                                       (map (lambda (x) (cadr x)) binds))))))
 
 (test* "#28" 11             (evaluate '(let ((a 10)) (+ a 1))))
 (test* "#29" 3              (evaluate '(let ([func (lambda (x y) (+ x y))]) (func 1 2))))
@@ -71,20 +59,11 @@
 (test* "#31" 30             (evaluate '(+ (call/cc (lambda (c) (set! x c) (c 10))) 20)))
 (test* "#32" '#(1096 1101)  (evaluate 'x))
 (test* "#33" 25             (evaluate '(x 5)))
-(test* "#34" '()            (evaluate '(define-macro letrec
-                                                     (lambda (args . bodies)
-                                                       (let ([vars (map (lambda (x) (car x)) args)]
-                                                             [vals (map (lambda (x) (cadr x)) args)])
-                                                         (append (list (append (list 'lambda vars)
-                                                                               (map (lambda (x) (list 'set! (car x) (cadr x))) args)
-                                                                               bodies
-                                                                               ))
-                                                                 (map (lambda (x) 0) args)))))))
 (test* "#35" 55             (evaluate '(letrec ([s (lambda (x)
                                                      (if (= x 0)
                                                        0
                                                        (+ x (s (- x 1)))))])
                                          (s 10))))
-(test* "#36" 99             (evaluate '((lambda (x y) ((lambda () (set! y 99) y)))
-					10 20)))
+;(test* "#36" 99             (evaluate '((lambda (x y) ((lambda () (set! y 99) y)))
+;					10 20)))
 (test-end)
