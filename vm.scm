@@ -116,7 +116,9 @@
         '(cons  . #(1015))
         '(car   . #(1018))
         '(cdr   . #(1021))
-        '(null? . #(1024))))
+        '(null? . #(1024))
+        '(*     . #(1027))
+        '(/     . #(1030))))
 
 ;; (refer-global 'x)
 ;;
@@ -198,7 +200,13 @@
     (#x3Ff 1)
     (#x400 null?)
     (#x401 return)
-    (#x402 1)))
+    (#x402 1)
+    (#x403 mul)
+    (#x404 return)
+    (#x405 2)
+    (#x406 div)
+    (#x407 return)
+    (#x408 2)))
 
 ;; アドレスからコードを得る
 (define code-index
@@ -440,6 +448,14 @@
                      (let ([a (index argp 0)]
                            [b (index argp 1)])
                        (VM (- a b) (1+ pc) f argp c s code))]
+               [mul ()
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (* a b) (1+ pc) f argp c s code))]
+               [div ()
+                     (let ([a (index argp 0)]
+                           [b (index argp 1)])
+                       (VM (/ a b) (1+ pc) f argp c s code))]
                [gt ()
                      (let ([a (index argp 0)]
                            [b (index argp 1)])

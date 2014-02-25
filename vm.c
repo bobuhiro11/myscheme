@@ -131,6 +131,8 @@ dump_code(int max)
 				case CODE_TEST:          printf(" ;TEST"); break;
 				case CODE_PLUS:          printf(" ;PLUS"); break;
 				case CODE_MINUS:         printf(" ;MINUS"); break;
+				case CODE_MUL:         	 printf(" ;MUL"); break;
+				case CODE_DIV:           printf(" ;DIV"); break;
 				case CODE_EQUAL:         printf(" ;EQUAL"); break;
 				case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
 				case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
@@ -450,6 +452,12 @@ exec_code()
 			case CODE_MINUS:
 				a = ((INDEX(s,0)>>2) - (INDEX(s,1)>>2)) << 2;
 				break;
+			case CODE_MUL:
+				a = ((INDEX(s,0)>>2) * (INDEX(s,1)>>2)) << 2;
+				break;
+			case CODE_DIV:
+				a = ((INDEX(s,0)>>2) / (INDEX(s,1)>>2)) << 2;
+				break;
 			case CODE_GT:
 				a = ((int)INDEX(s,0)>>2) > ((int)INDEX(s,1)>>2)
 					? VM_DATA_TRUE : VM_DATA_FALSE;
@@ -529,7 +537,9 @@ exec_code()
 				c	= a;
 				break;
 			case CODE_RETURN:
-				s	= s-(code[pc++] >> 2);
+				//s	= s-(code[pc++] >> 2);
+				pc++;
+				s	= f;
 				pc 	= INDEX(s,3) >> 2;
 				c 	= INDEX(s,2);
 				argp 	= INDEX(s,1) >> 2;
@@ -570,6 +580,12 @@ init_code()
 	code[HEAP_CODE_BASE + 24] = CODE_IS_NULL;
 	code[HEAP_CODE_BASE + 25] = CODE_RETURN;
 	code[HEAP_CODE_BASE + 26] = 1<<2;
+	code[HEAP_CODE_BASE + 27] = CODE_MUL;
+	code[HEAP_CODE_BASE + 28] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 29] = 2<<2;
+	code[HEAP_CODE_BASE + 30] = CODE_DIV;
+	code[HEAP_CODE_BASE + 31] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 32] = 1<<2;
 }
 
 
@@ -590,6 +606,8 @@ ht_init(struct hashtable *table)
 	ht_insert(table, "car",      create_closure(0, HEAP_CODE_BASE + 18, HEAP_CODE_BASE + 20,0));
 	ht_insert(table, "cdr",      create_closure(0, HEAP_CODE_BASE + 21, HEAP_CODE_BASE + 23,0));
 	ht_insert(table, "null?",    create_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
+	ht_insert(table, "*",        create_closure(0, HEAP_CODE_BASE + 27, HEAP_CODE_BASE + 29,0));
+	ht_insert(table, "/",        create_closure(0, HEAP_CODE_BASE + 30, HEAP_CODE_BASE + 32,0));
 }
 
 void
