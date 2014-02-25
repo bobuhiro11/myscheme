@@ -85,4 +85,6 @@
                                                        0
                                                        (+ x (s (- x 1)))))])
                                          (s 10))))
+(test* "#36" 99             (evaluate '((lambda (x y) ((lambda () (set! y 99) y)))
+					10 20)))
 (test-end)

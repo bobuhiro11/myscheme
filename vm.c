@@ -300,6 +300,8 @@ exec_code()
 				setbox(INDEX(argp, tmp), a);
 				break;
 			case CODE_ASSIGN_FREE:
+				tmp  = code[pc++] >> 2;	/* n		*/
+				setbox(CLOSURE_INDEX(c,tmp), a);
 				break;
 			case CODE_ASSIGN_GLOBAL:
 				break;
