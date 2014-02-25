@@ -543,33 +543,33 @@ exec_code()
 void
 init_code()
 {
-	code[1000] = CODE_EQUAL;
-	code[1001] = CODE_RETURN;
-	code[1002] = 2<<2;
-	code[1003] = CODE_MINUS;
-	code[1004] = CODE_RETURN;
-	code[1005] = 2<<2;
-	code[1006] = CODE_PLUS;
-	code[1007] = CODE_RETURN;
-	code[1008] = 2<<2;
-	code[1009] = CODE_GT;
-	code[1010] = CODE_RETURN;
-	code[1011] = 2<<2;
-	code[1012] = CODE_LT;
-	code[1013] = CODE_RETURN;
-	code[1014] = 2<<2;
-	code[1015] = CODE_CONS;
-	code[1016] = CODE_RETURN;
-	code[1017] = 2<<2;
-	code[1018] = CODE_CAR;
-	code[1019] = CODE_RETURN;
-	code[1020] = 1<<2;
-	code[1021] = CODE_CDR;
-	code[1022] = CODE_RETURN;
-	code[1023] = 1<<2;
-	code[1024] = CODE_IS_NULL;
-	code[1025] = CODE_RETURN;
-	code[1026] = 1<<2;
+	code[HEAP_CODE_BASE +  0] = CODE_EQUAL;
+	code[HEAP_CODE_BASE +  1] = CODE_RETURN;
+	code[HEAP_CODE_BASE +  2] = 2<<2;
+	code[HEAP_CODE_BASE +  3] = CODE_MINUS;
+	code[HEAP_CODE_BASE +  4] = CODE_RETURN;
+	code[HEAP_CODE_BASE +  5] = 2<<2;
+	code[HEAP_CODE_BASE +  6] = CODE_PLUS;
+	code[HEAP_CODE_BASE +  7] = CODE_RETURN;
+	code[HEAP_CODE_BASE +  8] = 2<<2;
+	code[HEAP_CODE_BASE +  9] = CODE_GT;
+	code[HEAP_CODE_BASE + 10] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 11] = 2<<2;
+	code[HEAP_CODE_BASE + 12] = CODE_LT;
+	code[HEAP_CODE_BASE + 13] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 14] = 2<<2;
+	code[HEAP_CODE_BASE + 15] = CODE_CONS;
+	code[HEAP_CODE_BASE + 16] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 17] = 2<<2;
+	code[HEAP_CODE_BASE + 18] = CODE_CAR;
+	code[HEAP_CODE_BASE + 19] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 20] = 1<<2;
+	code[HEAP_CODE_BASE + 21] = CODE_CDR;
+	code[HEAP_CODE_BASE + 22] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 23] = 1<<2;
+	code[HEAP_CODE_BASE + 24] = CODE_IS_NULL;
+	code[HEAP_CODE_BASE + 25] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 26] = 1<<2;
 }
 
 
@@ -581,15 +581,15 @@ ht_init(struct hashtable *table)
 {
 	ht_insert(table, "x",        123<<2);
 	ht_insert(table, "y",        256<<2);
-	ht_insert(table, "=",        create_closure(0, 1000, 1002,0));
-	ht_insert(table, "-",        create_closure(0, 1003, 1005,0));
-	ht_insert(table, "+",        create_closure(0, 1006, 1008,0));
-	ht_insert(table, ">",        create_closure(0, 1009, 1011,0));
-	ht_insert(table, "<",        create_closure(0, 1012, 1014,0));
-	ht_insert(table, "cons",     create_closure(0, 1015, 1017,0));
-	ht_insert(table, "car",      create_closure(0, 1018, 1020,0));
-	ht_insert(table, "cdr",      create_closure(0, 1021, 1023,0));
-	ht_insert(table, "null?",    create_closure(0, 1024, 1026,0));
+	ht_insert(table, "=",        create_closure(0, HEAP_CODE_BASE +  0, HEAP_CODE_BASE +  2,0));
+	ht_insert(table, "-",        create_closure(0, HEAP_CODE_BASE +  3, HEAP_CODE_BASE +  5,0));
+	ht_insert(table, "+",        create_closure(0, HEAP_CODE_BASE +  6, HEAP_CODE_BASE +  8,0));
+	ht_insert(table, ">",        create_closure(0, HEAP_CODE_BASE +  9, HEAP_CODE_BASE + 11,0));
+	ht_insert(table, "<",        create_closure(0, HEAP_CODE_BASE + 12, HEAP_CODE_BASE + 14,0));
+	ht_insert(table, "cons",     create_closure(0, HEAP_CODE_BASE + 15, HEAP_CODE_BASE + 17,0));
+	ht_insert(table, "car",      create_closure(0, HEAP_CODE_BASE + 18, HEAP_CODE_BASE + 20,0));
+	ht_insert(table, "cdr",      create_closure(0, HEAP_CODE_BASE + 21, HEAP_CODE_BASE + 23,0));
+	ht_insert(table, "null?",    create_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
 }
 
 int
