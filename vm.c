@@ -45,9 +45,9 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"close"))		rc =  CODE_CLOSE;
 	else if(!strcmp(s,"box"))		rc =  CODE_BOX;
 	else if(!strcmp(s,"test"))		rc =  CODE_TEST;
-	else if(!strcmp(s,"plus"))		rc =  CODE_PLUS;
-	else if(!strcmp(s,"minus"))		rc =  CODE_MINUS;
-	else if(!strcmp(s,"equal"))		rc =  CODE_EQUAL;
+	//else if(!strcmp(s,"plus"))		rc =  CODE_PLUS;
+	//else if(!strcmp(s,"minus"))		rc =  CODE_MINUS;
+	//else if(!strcmp(s,"equal"))		rc =  CODE_EQUAL;
 	else if(!strcmp(s,"assign-local"))	rc =  CODE_ASSIGN_LOCAL;
 	else if(!strcmp(s,"assign-free"))	rc =  CODE_ASSIGN_FREE;
 	else if(!strcmp(s,"assign-global"))	rc =  CODE_ASSIGN_GLOBAL;
@@ -133,6 +133,7 @@ dump_code(int max)
 				case CODE_MINUS:         printf(" ;MINUS"); break;
 				case CODE_MUL:         	 printf(" ;MUL"); break;
 				case CODE_DIV:           printf(" ;DIV"); break;
+				case CODE_MODULO:        printf(" ;MODULO"); break;
 				case CODE_EQUAL:         printf(" ;EQUAL"); break;
 				case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
 				case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
@@ -288,7 +289,7 @@ create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s)
 {
 	struct vm_obj *obj;
 	int i;
-	
+
 	obj = malloc(sizeof(struct vm_obj));
 	obj->tag 	   = VM_OBJ_CLOSURE;
 	obj->u.closure     = malloc(sizeof(vm_data) * (n+2));
@@ -363,6 +364,12 @@ insert_continuation_code(int s)
 	code[rom_last_address + 6] = 0;
 
 	rom_last_address += 6;
+}
+
+vm_data
+vm_modulo(int argp, int f)
+{
+	return ((INDEX(argp,0)>>2) % (INDEX(argp,1)>>2))<<2;
 }
 
 vm_data
@@ -498,6 +505,9 @@ exec_code()
 			case CODE_DIV:
 				a = vm_div(argp, f);
 				break;
+			case CODE_MODULO:
+				a = vm_modulo(argp, f);
+				break;
 			case CODE_GT:
 				a = ((int)INDEX(s,0)>>2) > ((int)INDEX(s,1)>>2)
 					? VM_DATA_TRUE : VM_DATA_FALSE;
@@ -626,6 +636,9 @@ init_code()
 	code[HEAP_CODE_BASE + 30] = CODE_DIV;
 	code[HEAP_CODE_BASE + 31] = CODE_RETURN;
 	code[HEAP_CODE_BASE + 32] = 1<<2;
+	code[HEAP_CODE_BASE + 33] = CODE_MODULO;
+	code[HEAP_CODE_BASE + 34] = CODE_RETURN;
+	code[HEAP_CODE_BASE + 35] = 2<<2;
 }
 
 
@@ -648,6 +661,7 @@ ht_init(struct hashtable *table)
 	ht_insert(table, "null?",    create_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
 	ht_insert(table, "*",        create_closure(0, HEAP_CODE_BASE + 27, HEAP_CODE_BASE + 29,0));
 	ht_insert(table, "/",        create_closure(0, HEAP_CODE_BASE + 30, HEAP_CODE_BASE + 32,0));
+	ht_insert(table, "modulo",   create_closure(0, HEAP_CODE_BASE + 33, HEAP_CODE_BASE + 35,0));
 }
 
 void
