@@ -365,6 +365,46 @@ insert_continuation_code(int s)
 	rom_last_address += 6;
 }
 
+vm_data
+vm_plus(int argp, int f)
+{
+	int i;
+	int64_t s=0;
+	for(i=0; i< (argp-f); i++)
+		s += (INDEX(argp,i)>>2);
+	return ((uint64_t)s) << 2;
+}
+
+vm_data
+vm_mul(int argp, int f)
+{
+	int i;
+	int64_t s=1;
+	for(i=0; i< (argp-f); i++)
+		s *= (INDEX(argp,i)>>2);
+	return ((uint64_t)s) << 2;
+}
+
+vm_data
+vm_minus(int argp, int f)
+{
+	int i;
+	int64_t s = INDEX(argp,0) >> 2;
+	for(i=1; i< (argp-f); i++)
+		s -= (INDEX(argp,i)>>2);
+	return ((uint64_t)s) << 2;
+}
+
+vm_data
+vm_div(int argp, int f)
+{
+	int i;
+	int64_t s = INDEX(argp,0) >> 2;
+	for(i=1; i< (argp-f); i++)
+		s /= (INDEX(argp,i)>>2);
+	return ((uint64_t)s) << 2;
+}
+
 /*
  * execute code stored in variable code
  * and return last accumlator value
@@ -447,16 +487,16 @@ exec_code()
 				if(a == VM_DATA_FALSE)	pc = tmp;
 				break;
 			case CODE_PLUS:
-				a = ((INDEX(s,0)>>2) + (INDEX(s,1)>>2)) << 2;
+				a = vm_plus(argp, f);
 				break;
 			case CODE_MINUS:
-				a = ((INDEX(s,0)>>2) - (INDEX(s,1)>>2)) << 2;
+				a = vm_minus(argp, f);
 				break;
 			case CODE_MUL:
-				a = ((INDEX(s,0)>>2) * (INDEX(s,1)>>2)) << 2;
+				a = vm_mul(argp, f);
 				break;
 			case CODE_DIV:
-				a = ((INDEX(s,0)>>2) / (INDEX(s,1)>>2)) << 2;
+				a = vm_div(argp, f);
 				break;
 			case CODE_GT:
 				a = ((int)INDEX(s,0)>>2) > ((int)INDEX(s,1)>>2)
