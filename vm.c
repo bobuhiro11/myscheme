@@ -73,7 +73,7 @@ get_vm_code(const char* s)
 			p = (char*)malloc(strlen(s) + 1);
 			memset(p, strlen(s)+1, 0);
 			strcpy(p, s);
-			rc = (uint64_t)p | 3;
+			rc = (vm_code)p | 3;
 		}
 	}
 
@@ -110,7 +110,7 @@ dump_code(int max)
 	int i;
 	printf("=== code ===\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%2d %018p", i, code[i]);
+		printf("%2d %018X", i, code[i]);
 
 		if(IS_CODE_CODE(code[i])){
 			switch(code[i]){
@@ -231,7 +231,7 @@ void
 write_vm_data(vm_data data)
 {
 	int val;
-	int64_t rc;
+	vm_data rc;
 	struct vm_obj *p;
 
 	if(IS_NUM(data))		printf("%d",data>>2);
@@ -269,7 +269,7 @@ dump_stack(int max)
 	printf("=== stack ===\n");
 	for(i=0;i<STACK_MAX && i<max;i++){
 		printf("%2d ",i);
-		printf("%018p ;",stack[i]);
+		printf("%018X ;",stack[i]);
 		write_vm_data(stack[i]);
 		printf("\n");
 	}
@@ -285,7 +285,7 @@ dump_stack(int max)
  *
  */
 vm_data
-create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s)
+create_closure(int n, int bodyadr, int ebodyadr, int s)
 {
 	struct vm_obj *obj;
 	int i;
@@ -300,7 +300,7 @@ create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s)
 		obj->u.closure[i+2] = INDEX(s,i);
 	}
 
-	return ((uint64_t)obj) | 3;
+	return ((vm_data)obj) | 3;
 }
 
 
@@ -308,7 +308,7 @@ create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s)
  * shift n elements of stack top
  */
 void
-shift_args(uint32_t n, uint32_t m, uint32_t s)
+shift_args(int n, int m, int s)
 {
 	int i;
 	for(i=n-1; i>=0; i--){
@@ -330,7 +330,7 @@ save_stack(int s)
 	for(i=0;i<s;i++){
 		obj->u.stack.p[i] = stack[i];
 	}
-	return ((uint64_t)obj) | 3;
+	return ((vm_data)obj) | 3;
 }
 
 int
@@ -376,40 +376,40 @@ vm_data
 vm_plus(int argp, int f)
 {
 	int i;
-	int64_t s=0;
+	vm_data s=0;
 	for(i=0; i< (argp-f); i++)
 		s += (INDEX(argp,i)>>2);
-	return ((uint64_t)s) << 2;
+	return s << 2;
 }
 
 vm_data
 vm_mul(int argp, int f)
 {
 	int i;
-	int64_t s=1;
+	vm_data s=1;
 	for(i=0; i< (argp-f); i++)
 		s *= (INDEX(argp,i)>>2);
-	return ((uint64_t)s) << 2;
+	return s << 2;
 }
 
 vm_data
 vm_minus(int argp, int f)
 {
 	int i;
-	int64_t s = INDEX(argp,0) >> 2;
+	vm_data s = INDEX(argp,0) >> 2;
 	for(i=1; i< (argp-f); i++)
 		s -= (INDEX(argp,i)>>2);
-	return ((uint64_t)s) << 2;
+	return s << 2;
 }
 
 vm_data
 vm_div(int argp, int f)
 {
 	int i;
-	int64_t s = INDEX(argp,0) >> 2;
+	vm_data s = INDEX(argp,0) >> 2;
 	for(i=1; i< (argp-f); i++)
 		s /= (INDEX(argp,i)>>2);
-	return ((uint64_t)s) << 2;
+	return s << 2;
 }
 
 /*
@@ -509,11 +509,11 @@ exec_code()
 				a = vm_modulo(argp, f);
 				break;
 			case CODE_GT:
-				a = ((int)INDEX(s,0)>>2) > ((int)INDEX(s,1)>>2)
+				a = (INDEX(s,0)>>2) > (INDEX(s,1)>>2)
 					? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_LT:
-				a = ((int)INDEX(s,0)>>2) < ((int)INDEX(s,1)>>2)
+				a = (INDEX(s,0)>>2) < (INDEX(s,1)>>2)
 					? VM_DATA_TRUE : VM_DATA_FALSE;
 				break;
 			case CODE_EQUAL:

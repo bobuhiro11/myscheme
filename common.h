@@ -118,8 +118,8 @@
 /***************************************************
  * structure definition
  ***************************************************/
-typedef uint64_t vm_code;
-typedef uint64_t vm_data;
+typedef intptr_t vm_code;
+typedef intptr_t vm_data;
 
 struct vm_obj
 {
@@ -152,7 +152,6 @@ void get_code();
 void dump_code(int max);
 void write_vm_data(vm_data data);
 void dump_stack(int max);
-vm_data create_closure(uint32_t n, uint32_t bodyadr, uint32_t ebodyadr, int s);
 vm_data exec_code();
 
 vm_data ht_insert(struct hashtable *table, const char *key, vm_data data);
