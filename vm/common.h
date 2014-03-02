@@ -104,6 +104,8 @@
 #define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
 #define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
 #define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
+#define SET_CLOSURE_BODY(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[0]  = n << 2)
+#define SET_CLOSURE_EBODY(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[1]  = n << 2)
 
 #define CAR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.car)
 #define CDR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.cdr)
@@ -131,6 +133,7 @@ struct vm_obj
 		struct {
 			vm_data *p;
 			int size;
+			int f;
 		} stack;
 		struct {
 			vm_data *car;
