@@ -63,6 +63,7 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"apply"))		rc =  CODE_APPLY;
 	else if(!strcmp(s,"return"))		rc =  CODE_RETURN;
 	else if(!strcmp(s,"display"))		rc =  CODE_DISPLAY;
+	else if(!strcmp(s,"disasm"))		rc =  CODE_DISASM;
 	else if(!strcmp(s,"newline"))		rc =  CODE_NEWLINE;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
@@ -173,6 +174,10 @@ dump_code(int max)
 				case CODE_RETURN:        printf(" ;RETURN"); break;
 				case CODE_GT:        	 printf(" ;GT"); break;
 				case CODE_LT:        	 printf(" ;LT"); break;
+
+				case CODE_DISPLAY:       printf(" ;DISPLAY"); break;
+				case CODE_NEWLINE:     	 printf(" ;NEWLINE"); break;
+				case CODE_DISASM:     	 printf(" ;DISASM"); break;
 
 				case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
 				case CODE_TRUE:          printf(" ;TRUE"); break;
@@ -608,6 +613,10 @@ exec_code()
 			case CODE_DISPLAY:
 				write_vm_data(a);
 				break;
+			case CODE_DISASM:
+				dump_code(rom_last_address+1);
+				printf("\n");
+				break;
 			case CODE_NEWLINE:
 				printf("\n");
 				break;
@@ -777,12 +786,12 @@ main(int argc, char **argv)
 	init_code();
 
 	while(get_code()){
-		dump_code(10);
+		//dump_code(10);
 		rc = exec_code();
-		printf("=== result ===\n");
+		//printf("=== result ===\n");
 		write_vm_data(rc);
 		printf("\n");
-		dump_stack(10);
+		//dump_stack(10);
 	}
 
 	ht_destory(global_table);

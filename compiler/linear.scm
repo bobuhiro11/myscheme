@@ -17,6 +17,9 @@
                  [display (x)
                               (cons (list adr 'display)
                                     (3imp->linear x (+ adr 1)))]
+                 [disasm (x)
+                              (cons (list adr 'disasm)
+                                    (3imp->linear x (+ adr 1)))]
                  [refer-local (n x)
                               (cons (list adr 'refer-local)
                                     (cons (list (+ adr 1) n)

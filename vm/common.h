@@ -51,6 +51,7 @@
 #define CODE_MUL        	0x1f000002
 #define CODE_DIV       		0x20000002
 #define CODE_MODULO    		0x26000002
+#define CODE_DISASM    		0x27000002
 #define CODE_INVALID 		0xFF000002
 
 #define CODE_CONSTNIL       	0x21000002

@@ -1,1 +1,1 @@
-(+ (call/cc (lambda (c) (set! x c) (c 10) 1)) 20)
+(list 'a (call/cc (lambda (c) (set! p c) (c 'b))) 'c)

@@ -241,6 +241,8 @@
      (record-case x
                   [display (x)
                     (compile x e s (list 'display next))]
+                  [disasm (x)
+                    (compile x e s (list 'disasm next))]
                   [newline ()
                     (list 'newline next)]
                   [quote (obj)
