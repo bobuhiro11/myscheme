@@ -20,6 +20,8 @@ struct hashtable *global_table;
 
 int rom_last_address;
 
+int host_bit;
+
 /*
  * translate code(string) to code(vm_code)
  */
@@ -111,15 +113,28 @@ get_code()
 }
 
 /*
+ * dump as hex format
+ */
+void
+dump_address(vm_data data)
+{
+	if(host_bit == 32){
+		printf("%010X", data);
+	}else{
+		printf("%018X", data);
+	}
+}
+
+/*
  * dump code
  */
 void
 dump_code(int max)
 {
-	int i;
-	printf("=== code ===\n");
+	int i; printf("=== code ===\n");
 	for(i=0;i<CODE_MAX && i<max;i++){
-		printf("%2d %018X", i, code[i]);
+		printf("%2d ", i);
+		dump_address(code[i]);
 
 		if(IS_CODE_CODE(code[i])){
 			switch(code[i]){
@@ -278,7 +293,8 @@ dump_stack(int max)
 	printf("=== stack ===\n");
 	for(i=0;i<STACK_MAX && i<max;i++){
 		printf("%2d ",i);
-		printf("%018X ;",stack[i]);
+		dump_address(stack[i]);
+		printf(" ;");
 		write_vm_data(stack[i]);
 		printf("\n");
 	}
@@ -677,6 +693,7 @@ void
 dump_info()
 {
 	printf("=== INFO ===\n");
+	printf("HOST_BIT:       %7d\n",host_bit);
 	printf("CODE_MAX:       %7d\n",CODE_MAX);
 	printf("HEAP_CODE_BASE: %7d\n",HEAP_CODE_BASE);
 	printf("STACK_MAX:      %7d\n",STACK_MAX);
@@ -687,6 +704,7 @@ main(int argc, char **argv)
 {
 	vm_data rc;
 
+	host_bit = (sizeof(intptr_t) == 4) ? 32 : 64;
 	dump_info();
 
 	global_table = ht_create();
