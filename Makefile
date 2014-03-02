@@ -1,9 +1,10 @@
 CC  					:= gcc
 CFLAGS     		:= -g -w
-TARGET				:= myscmvm
+TARGET				:= vm/myscmvm
+COMPILER 			:= compiler/main.scm
 
-SOURCES_C     := vm.c hashtable.c
-HEADER				:= common.h
+SOURCES_C     := vm/vm.c vm/hashtable.c
+HEADER				:= vm/common.h
 
 TESTS					:= $(wildcard test/*.scm)
 
@@ -15,5 +16,8 @@ clean:
 
 test: $(TARGET) $(TESTS)
 	@for test in $(TESTS) ; do \
-		(cat $$test | ./main.scm | ./$(TARGET) ) ;\
+		(cat $$test | $(COMPILER) | ./$(TARGET) ) ;\
 		done
+
+run: $(TARGET)
+	$(COMPILER) | $(TARGET)

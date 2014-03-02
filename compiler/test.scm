@@ -1,5 +1,6 @@
 (use gauche.test)
-(load "./main.scm")
+(add-load-path "." :relative)
+(load "main.scm")
 
 (test-start "scheme interpreter")
 

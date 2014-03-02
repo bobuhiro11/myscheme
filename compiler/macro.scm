@@ -2,7 +2,8 @@
 ;;;
 ;;; 伝統的なマクロにより，compile以前にコードの展開する
 
-(load "./util.scm")
+(add-load-path "." :relative)
+(load "util.scm")
 
 (define *traditional-macros*
   (list

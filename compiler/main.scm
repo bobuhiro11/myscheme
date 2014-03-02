@@ -1,10 +1,11 @@
 #!/usr/bin/env gosh
 
-(load "./util.scm")
-(load "./macro.scm")
-(load "./compile.scm")
-(load "./linear.scm")
-(load "./vm.scm")
+(add-load-path "." :relative)
+(load "util.scm")
+(load "macro.scm")
+(load "compile.scm")
+(load "linear.scm")
+(load "vm.scm")
 
 (define evaluate
   (lambda (x)

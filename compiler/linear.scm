@@ -2,7 +2,8 @@
 ;;;
 ;;; Compilierが吐いた3imp VM用コードを線形なフォーマットの言語へ変換
 
-(load "./util.scm")
+(add-load-path "." :relative)
+(load "util.scm")
 
 
 (define 3imp->linear

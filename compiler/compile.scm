@@ -2,7 +2,8 @@
 ;;;
 ;;; マクロ展開後のschemeコードを，3imp VM用コードへ変換
 
-(load "./util.scm")
+(add-load-path "." :relative)
+(load "util.scm")
 
 ;; 自由変数(グローバル変数を含まない)を検索
 ;; (find-free

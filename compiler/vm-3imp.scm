@@ -3,7 +3,8 @@
 ;;;
 ;;; Compilierが吐いた3imp VM用コードを実行する
 
-(load "./util.scm")
+(add-load-path "." :relative)
+(load "/util.scm")
 
 (define closure
   (lambda (body n s)

@@ -3,8 +3,9 @@
 ;;;
 ;;; Compilierが吐きlinaerフォーマット変換後コードを実行する
 
-(load "./util.scm")
-(load "./linear.scm")
+(add-load-path "." :relative)
+(load "util.scm")
+(load "linear.scm")
 
 (define closure
   (lambda (bodyadr ebodyadr n s)
