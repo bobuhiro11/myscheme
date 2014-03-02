@@ -44,6 +44,10 @@
   (lambda ()
     (let ([c (read)])
       (unless (eof-object? c)
-        (linear-compile c)))))
+        (display "#begin") (newline)
+        (linear-compile c)
+        (display "#end") (newline)
+        (flush) 
+        (my-repl)))))
 
 (my-repl)

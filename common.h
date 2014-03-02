@@ -148,7 +148,6 @@ struct hashtable{
  * function prototype definition
  ***************************************************/
 vm_code get_vm_code(const char* s);
-void get_code();
 void dump_code(int max);
 void write_vm_data(vm_data data);
 void dump_stack(int max);

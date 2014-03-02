@@ -82,8 +82,10 @@ get_vm_code(const char* s)
 
 /*
  * get code from stdin and store in code
+ *
+ * return 0 if the code is not found.
  */
-void
+int
 get_code()
 {
 	char row[256];
@@ -91,14 +93,21 @@ get_code()
 	vm_code c;
 	char s[256];
 
+	printf(">>");
+	fflush(stdout);
+
 	while(fgets(row, sizeof(row), stdin) != NULL){
-		if(row[0]=='#')
+		if(strstr(row,"#end")){
+			rom_last_address = i;
+			return 1;
+		}else if(row[0]=='#'){
 			continue;
+		}
 		sscanf(row, "%d %s\n", &i, s);
 		c = get_vm_code(s);
 		code[i] = c;
 	}
-	rom_last_address = i;
+	return 0;
 }
 
 /*
@@ -685,14 +694,15 @@ main(int argc, char **argv)
 	ht_dump(global_table);
 
 	init_code();
-	get_code();
 
-	dump_code(10);
-	rc = exec_code();
-	printf("=== result ===\n");
-	write_vm_data(rc);
-	printf("\n");
-	dump_stack(10);
+	while(get_code()){
+		dump_code(10);
+		rc = exec_code();
+		printf("=== result ===\n");
+		write_vm_data(rc);
+		printf("\n");
+		dump_stack(10);
+	}
 
 	ht_destory(global_table);
 
