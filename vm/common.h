@@ -133,7 +133,6 @@ struct vm_obj
 		struct {
 			vm_data *p;
 			int size;
-			int f;
 		} stack;
 		struct {
 			vm_data *car;

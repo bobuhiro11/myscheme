@@ -19,6 +19,7 @@ vm_data stack[STACK_MAX];
 struct hashtable *global_table;
 
 int rom_last_address;
+int heap_last_address;
 
 int host_bit;
 
@@ -193,12 +194,47 @@ dump_code(int max)
 	}
 }
 
+/*
+ * modify stack
+ *
+ */
+vm_data
+modify_stack(vm_data data)
+{
+	int min_adr = rom_last_address;
+	struct vm_obj *stack;
+	int size;		/* stack size */
+	vm_data *p;		/* stack body */
+	int i,d;
+
+	stack = code[CLOSURE_BODY(data) + 3] - 3;
+	size  = stack->u.stack.size;
+	p     = stack->u.stack.p;
+
+	for(i=0;i<size;i++)
+		if(p[i] == VM_DATA_END_OF_FRAME && (p[i+1]>>2) < min_adr)
+			min_adr = p[i+1] >> 2;
+
+	d = heap_last_address + 1 - min_adr;
+
+	for(i=min_adr;i<=rom_last_address;i++)
+		code[i+d] = code[i];
+
+	heap_last_address = rom_last_address + d;
+
+	for(i=0;i<size;i++)
+		if(p[i] == VM_DATA_END_OF_FRAME)
+			p[i+1] = ((p[i+1] >> 2) + d) << 2;
+
+	return data;
+}
+
 vm_data
 save_closure_body(vm_data data)
 {
 	int start = CLOSURE_BODY(data);
 	int end   = CLOSURE_EBODY(data);
-	int d     = rom_last_address + 1 - start;
+	int d     = heap_last_address + 1 - start;
 	int i;
 
 	SET_CLOSURE_BODY(data, start +d);	
@@ -206,6 +242,11 @@ save_closure_body(vm_data data)
 	
 	for(i=start; i<=end; i++)
 		code[i+d] = code[i];
+
+	heap_last_address = end + d;
+
+	if(code[start + 2] == CODE_NUATE)
+		data = modify_stack(data);
 
 	return data;
 }
@@ -365,13 +406,12 @@ shift_args(int n, int m, int s)
  * save stack
  */
 vm_data
-save_stack(int f, int s)
+save_stack(int s)
 {
 	int i;
 	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
 	obj->tag = VM_OBJ_STACK;
 	obj->u.stack.size = s;
-	obj->u.stack.f = f;
 	obj->u.stack.p = malloc(sizeof(vm_data) * s);
 	for(i=0;i<s;i++){
 		obj->u.stack.p[i] = stack[i];
@@ -379,8 +419,8 @@ save_stack(int f, int s)
 	return ((vm_data)obj) | 3;
 }
 
-void
-restore_stack(vm_data x, int *f, int *s)
+int
+restore_stack(vm_data x)
 {
 	int i,n;
 	struct vm_obj *obj = x-3;
@@ -393,21 +433,19 @@ restore_stack(vm_data x, int *f, int *s)
 	for(i=0;i<n;i++){
 		stack[i] = obj->u.stack.p[i];
 	}
-	*f = n;
-	*s = n;
-	return;
+	return n;
 }
 
 /*
  * insert codes for continue and update rom last address
  */
 void
-insert_continuation_code(int f, int s)
+insert_continuation_code(int s)
 {
 	code[rom_last_address + 1] = CODE_REFER_LOCAL;
 	code[rom_last_address + 2] = 0;
 	code[rom_last_address + 3] = CODE_NUATE;
-	code[rom_last_address + 4] = save_stack(f, s);
+	code[rom_last_address + 4] = save_stack(s);
 	code[rom_last_address + 5] = CODE_RETURN;
 	code[rom_last_address + 6] = 0;
 
@@ -605,11 +643,11 @@ exec_code()
 				break;
 			case CODE_CONTI:
 				a = create_closure(0,rom_last_address+1,rom_last_address+6,0);
-				insert_continuation_code(f,s);
+				insert_continuation_code(s);
 				break;
 			case CODE_NUATE:
 				tmp  = code[pc++];	/* stack	*/
-				restore_stack(tmp,&f,&s);
+				s = f = restore_stack(tmp);
 				break;
 			case CODE_FRAME:
 				s = PUSH(s, VM_DATA_END_OF_FRAME);
@@ -687,6 +725,8 @@ init_code()
 	code[HEAP_CODE_BASE + 33] = CODE_MODULO;
 	code[HEAP_CODE_BASE + 34] = CODE_RETURN;
 	code[HEAP_CODE_BASE + 35] = 2<<2;
+
+	heap_last_address = HEAP_CODE_BASE + 35;
 }
 
 
