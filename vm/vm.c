@@ -338,24 +338,28 @@ write_vm_data(vm_data data)
 	else if(IS_UNDEFINED(data))	printf("undef");
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
 	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
-	else if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
-	else if(IS_STRING(data))	printf("\"%s\"", STRING(data));
-	else if(IS_SYMBOL(data))	printf("%s", SYMBOL(data));
-	else if(IS_PAIR(data)) {
-		if(is_list(data)){
-			write_vm_list(data,1);
-		}else{
+	else if(IS_OBJ(data)){
+		/* object */
+		if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
+		else if(IS_STRING(data))	printf("\"%s\"", STRING(data));
+		else if(IS_SYMBOL(data))	printf("%s", SYMBOL(data));
+		else if(IS_PAIR(data)) {
+			if(is_list(data)){
+				write_vm_list(data,1);
+			}else{
 
-			p = data-3;
-			printf("(");
-			write_vm_data(p->u.pair.car);
-			printf(" . ");
-			write_vm_data(p->u.pair.cdr);
-			printf(")");
+				p = data-3;
+				printf("(");
+				write_vm_data(p->u.pair.car);
+				printf(" . ");
+				write_vm_data(p->u.pair.cdr);
+				printf(")");
+			}
+		}else{
+			dump_address(data);
+			printf(" ;Bad data");
 		}
-	}else{
-		dump_address(data);
-		printf(" ;Bad data");
+		//printf("[%dB]",OBJ_SIZE(data));
 	}
 }
 
@@ -553,17 +557,18 @@ exec_code()
 				a = code[pc++];
 				break;
 			case CODE_CONSTSTR:
-				p = myalloc(sizeof(struct vm_obj)+ sizeof(char)*10);
-				p->tag = VM_OBJ_STRING;
-				p->u.string = (code[pc++] - 3);
-				a = (vm_data)p | 3;
-				//a = gc_alloc_string(code[pc++]-3);
+				// p = myalloc(sizeof(struct vm_obj)+ sizeof(char)*10);
+				// p->tag = VM_OBJ_STRING;
+				// p->u.string = (code[pc++] - 3);
+				// a = (vm_data)p | 3;
+				a = gc_alloc_string(code[pc++]-3);
 				break;
 			case CODE_CONSTSYM:
-				p = myalloc(sizeof(struct vm_obj));
-				p->tag = VM_OBJ_SYMBOL;
-				p->u.symbol = (code[pc++] - 3);
-				a = (vm_data)p | 3;
+				//p = myalloc(sizeof(struct vm_obj));
+				//p->tag = VM_OBJ_SYMBOL;
+				//p->u.symbol = (code[pc++] - 3);
+				//a = (vm_data)p | 3;
+				a = gc_alloc_symbol(code[pc++]-3);
 				break;
 			case CODE_CONSTNIL:
 				pc++;

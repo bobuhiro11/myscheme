@@ -56,3 +56,33 @@ gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s)
 
 	return ((vm_data)obj) | 3;
 }
+
+vm_data
+gc_alloc_string(char *str)
+{
+	struct vm_obj *obj;
+	int size;
+
+	size = sizeof(struct vm_obj) + strlen(str) +1;
+	obj = myalloc(size);
+	obj->tag = VM_OBJ_STRING;
+	obj->u.string = (char*)obj + sizeof(struct vm_obj);
+	strcpy(obj->u.string,str);
+
+	return ((vm_data)obj) | 3;
+}
+
+vm_data
+gc_alloc_symbol(char *str)
+{
+	struct vm_obj *obj;
+	int size;
+
+	size = sizeof(struct vm_obj) + strlen(str) +1;
+	obj = myalloc(size);
+	obj->tag = VM_OBJ_SYMBOL;
+	obj->u.string = (char*)obj + sizeof(struct vm_obj);
+	strcpy(obj->u.string,str);
+
+	return ((vm_data)obj) | 3;
+}

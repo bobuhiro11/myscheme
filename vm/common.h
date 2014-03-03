@@ -120,6 +120,8 @@
 #define INDEX(s,n)		(stack[(s)-(n)-1])
 #define SET_INDEX(s,n,x)	(stack[(s)-(n)-1] = x)
 
+#define OBJ_SIZE(x)		(((struct vm_obj*)((x)-3))->size)
+
 /***************************************************
  * structure definition
  ***************************************************/
@@ -174,6 +176,8 @@ void ht_destory(struct hashtable *table);
 void gc_init();
 struct vm_obj *myalloc(size_t s);
 vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s);
+vm_data gc_alloc_string(char *str);
+vm_data gc_alloc_symbol(char *symbol);
 
 /***************************************************
  * external variable definition
