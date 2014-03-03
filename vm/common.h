@@ -16,7 +16,7 @@
 #define CODE_MAX 	2048
 #define HEAP_CODE_BASE 	(CODE_MAX * 2 / 3)
 #define STACK_MAX 	1024
-#define POOL_MAX 	20000000000
+#define POOL_MAX 	2000000000
 
 #define CODE_HALT 		0x00000002	/* for vm_code */
 #define CODE_REFER_LOCAL 	0x01000002
