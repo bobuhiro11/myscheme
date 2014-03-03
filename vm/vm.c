@@ -121,9 +121,9 @@ void
 dump_address(vm_data data)
 {
 	if(host_bit == 32){
-		printf("%010X", data);
+		printf("%010p", data);
 	}else{
-		printf("%018X", data);
+		printf("%018p", data);
 	}
 }
 
