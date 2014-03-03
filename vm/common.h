@@ -130,7 +130,10 @@ struct vm_obj
 {
 	unsigned char tag;
 
-	/* memory allocated size contain string, closure etc. */
+	/* 
+	 * memory allocated size contain string, closure etc.
+	 * set by myalloc() and must not change the value.
+	 */
 	int size;
 
 	union{
@@ -168,7 +171,8 @@ void ht_dump(const struct hashtable *table);
 struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
 
-void *myalloc(size_t s);
+void gc_init();
+struct vm_obj *myalloc(size_t s);
 vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s);
 
 /***************************************************

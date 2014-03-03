@@ -780,6 +780,8 @@ main(int argc, char **argv)
 	vm_data rc;
 
 	host_bit = (sizeof(intptr_t) == 4) ? 32 : 64;
+
+	gc_init();
 	dump_info();
 
 	global_table = ht_create();

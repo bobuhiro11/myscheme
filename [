@@ -6,23 +6,21 @@ size_t free_p;
 void
 gc_init()
 {
-	pool = malloc(POOL_MAX);
+	pool = malloc(sizeof(POOL_MAX));
 	free_p = 0;
 }
 
-struct vm_obj *
+void *
 myalloc(size_t s)
 {
-	struct vm_obj *rc = (char*)pool + free_p;
+	char *rc = (char*)pool + free_p;
 	int size;
 
-	/* alignment */
-	int p = sizeof(struct vm_obj);
-	size = ((s+p-1) / p ) * p;
+	/*
+	 * 8 byte alignment
+	 */
+	size = ((s+7) / 8 ) * 8;
 	free_p += size;
-
-	/* set size */
-	rc->size = size;
 
 	return rc;
 }
@@ -45,6 +43,7 @@ gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s)
 
 	size = sizeof(struct vm_obj) + sizeof(vm_data) * (n+2);
 	obj = myalloc(size);
+	obj->size          = size;
 	obj->tag 	   = VM_OBJ_CLOSURE;
 	obj->u.closure     = (char*)obj + sizeof(struct vm_obj);
 	obj->u.closure[0]  = bodyadr << 2;
