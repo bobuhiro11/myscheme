@@ -168,6 +168,7 @@ struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
 
 void *myalloc(size_t s);
+vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s);
 
 /***************************************************
  * external variable definition

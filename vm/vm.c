@@ -392,35 +392,6 @@ dump_stack(int max)
 }
 
 /*
- * create_closure
- *
- * u.closure[0]: body start adr
- * u.closure[1]: body end   adr
- *
- * u.closure[i]: vm_data list (i > 1)
- *
- */
-vm_data
-create_closure(int n, int bodyadr, int ebodyadr, int s)
-{
-	struct vm_obj *obj;
-	int i;
-
-	obj = myalloc(sizeof(struct vm_obj));
-	obj->tag 	   = VM_OBJ_CLOSURE;
-	obj->u.closure     = malloc(sizeof(vm_data) * (n+2));
-	obj->u.closure[0]  = bodyadr << 2;
-	obj->u.closure[1]  = ebodyadr << 2;
-
-	for(i=0;i<n;i++){
-		obj->u.closure[i+2] = INDEX(s,i);
-	}
-
-	return ((vm_data)obj) | 3;
-}
-
-
-/*
  * shift n elements of stack top
  */
 void
@@ -598,7 +569,7 @@ exec_code()
 				tmp  = code[pc++] >> 2;	/* n		*/
 				tmp2 = code[pc++] >> 2;	/* bodyadr 	*/
 				tmp3 = code[pc++] >> 2;	/* ebodyadr	*/
-				a = create_closure(tmp, tmp2, tmp3, s);
+				a = gc_alloc_closure(tmp, tmp2, tmp3, s);
 				s -= tmp;
 				break;
 			case CODE_BOX:
@@ -676,7 +647,7 @@ exec_code()
 				assign_global(tmp-3, a);
 				break;
 			case CODE_CONTI:
-				a = create_closure(0,rom_last_address+1,rom_last_address+6,0);
+				a = gc_alloc_closure(0,rom_last_address+1,rom_last_address+6,0);
 				insert_continuation_code(s);
 				break;
 			case CODE_NUATE:
@@ -772,18 +743,18 @@ ht_init(struct hashtable *table)
 {
 	ht_insert(table, "x",        123<<2);
 	ht_insert(table, "y",        256<<2);
-	ht_insert(table, "=",        create_closure(0, HEAP_CODE_BASE +  0, HEAP_CODE_BASE +  2,0));
-	ht_insert(table, "-",        create_closure(0, HEAP_CODE_BASE +  3, HEAP_CODE_BASE +  5,0));
-	ht_insert(table, "+",        create_closure(0, HEAP_CODE_BASE +  6, HEAP_CODE_BASE +  8,0));
-	ht_insert(table, ">",        create_closure(0, HEAP_CODE_BASE +  9, HEAP_CODE_BASE + 11,0));
-	ht_insert(table, "<",        create_closure(0, HEAP_CODE_BASE + 12, HEAP_CODE_BASE + 14,0));
-	ht_insert(table, "cons",     create_closure(0, HEAP_CODE_BASE + 15, HEAP_CODE_BASE + 17,0));
-	ht_insert(table, "car",      create_closure(0, HEAP_CODE_BASE + 18, HEAP_CODE_BASE + 20,0));
-	ht_insert(table, "cdr",      create_closure(0, HEAP_CODE_BASE + 21, HEAP_CODE_BASE + 23,0));
-	ht_insert(table, "null?",    create_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
-	ht_insert(table, "*",        create_closure(0, HEAP_CODE_BASE + 27, HEAP_CODE_BASE + 29,0));
-	ht_insert(table, "/",        create_closure(0, HEAP_CODE_BASE + 30, HEAP_CODE_BASE + 32,0));
-	ht_insert(table, "modulo",   create_closure(0, HEAP_CODE_BASE + 33, HEAP_CODE_BASE + 35,0));
+	ht_insert(table, "=",        gc_alloc_closure(0, HEAP_CODE_BASE +  0, HEAP_CODE_BASE +  2,0));
+	ht_insert(table, "-",        gc_alloc_closure(0, HEAP_CODE_BASE +  3, HEAP_CODE_BASE +  5,0));
+	ht_insert(table, "+",        gc_alloc_closure(0, HEAP_CODE_BASE +  6, HEAP_CODE_BASE +  8,0));
+	ht_insert(table, ">",        gc_alloc_closure(0, HEAP_CODE_BASE +  9, HEAP_CODE_BASE + 11,0));
+	ht_insert(table, "<",        gc_alloc_closure(0, HEAP_CODE_BASE + 12, HEAP_CODE_BASE + 14,0));
+	ht_insert(table, "cons",     gc_alloc_closure(0, HEAP_CODE_BASE + 15, HEAP_CODE_BASE + 17,0));
+	ht_insert(table, "car",      gc_alloc_closure(0, HEAP_CODE_BASE + 18, HEAP_CODE_BASE + 20,0));
+	ht_insert(table, "cdr",      gc_alloc_closure(0, HEAP_CODE_BASE + 21, HEAP_CODE_BASE + 23,0));
+	ht_insert(table, "null?",    gc_alloc_closure(0, HEAP_CODE_BASE + 24, HEAP_CODE_BASE + 26,0));
+	ht_insert(table, "*",        gc_alloc_closure(0, HEAP_CODE_BASE + 27, HEAP_CODE_BASE + 29,0));
+	ht_insert(table, "/",        gc_alloc_closure(0, HEAP_CODE_BASE + 30, HEAP_CODE_BASE + 32,0));
+	ht_insert(table, "modulo",   gc_alloc_closure(0, HEAP_CODE_BASE + 33, HEAP_CODE_BASE + 35,0));
 }
 
 void
