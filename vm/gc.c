@@ -1,14 +1,27 @@
 #include "common.h"
 
 char pool[POOL_MAX];
-int free_p = 0;
+size_t free_p = 0;
+static void *dummy;
 
 void *
 myalloc(size_t s)
 {
-	char *rc = pool + free_p;
-//	printf("[free_p: %d]\n",free_p);
-	free_p += s;
+	char *rc = (char*)pool + free_p;
+	int size;
+
+	/*
+	 * 8 byte alignment
+	 */
+	size = ((s+7) / 8 ) * 8;
+	free_p += size;
+
+	/*
+	 * Notice:
+	 * 	problem occur if we allocate some space and don't bind any variable.
+	 */
+	dummy = rc;
+
 	return rc;
 }
 

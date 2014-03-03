@@ -1,7 +1,7 @@
 (letrec ([next (lambda (i)
                  (if (= i 0)
                    0
-                   (begin (space i) (display "進捗ダメです") (newline) (next (- i 1)))))]
+                   (begin (space i) (display "sintyokudamedesu") (newline) (next (- i 1)))))]
          [space (lambda (i)
                   (if (> i 20)
                     (space (- i 20))

@@ -353,6 +353,9 @@ write_vm_data(vm_data data)
 			write_vm_data(p->u.pair.cdr);
 			printf(")");
 		}
+	}else{
+		dump_address(data);
+		printf(" ;Bad data");
 	}
 }
 
@@ -533,12 +536,15 @@ exec_code()
 				return a;
 			case CODE_REFER_LOCAL:
 				a = INDEX(argp, code[pc++]>>2);
+				myalloc(7);
 				break;
 			case CODE_REFER_FREE:
 				a = CLOSURE_INDEX(c, code[pc++]>>2);
+				myalloc(6);
 				break;
 			case CODE_REFER_GLOBAL:
 				a = ht_find(global_table, code[pc++]-3);
+				myalloc(12);
 				break;
 			case CODE_INDIRECT:
 				a = unbox(a);
@@ -547,10 +553,11 @@ exec_code()
 				a = code[pc++];
 				break;
 			case CODE_CONSTSTR:
-				p = myalloc(sizeof(struct vm_obj));
+				p = myalloc(sizeof(struct vm_obj)+ sizeof(char)*10);
 				p->tag = VM_OBJ_STRING;
 				p->u.string = (code[pc++] - 3);
 				a = (vm_data)p | 3;
+				//a = gc_alloc_string(code[pc++]-3);
 				break;
 			case CODE_CONSTSYM:
 				p = myalloc(sizeof(struct vm_obj));
