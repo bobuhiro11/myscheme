@@ -406,7 +406,7 @@ create_closure(int n, int bodyadr, int ebodyadr, int s)
 	struct vm_obj *obj;
 	int i;
 
-	obj = malloc(sizeof(struct vm_obj));
+	obj = myalloc(sizeof(struct vm_obj));
 	obj->tag 	   = VM_OBJ_CLOSURE;
 	obj->u.closure     = malloc(sizeof(vm_data) * (n+2));
 	obj->u.closure[0]  = bodyadr << 2;
@@ -439,7 +439,7 @@ vm_data
 save_stack(int s)
 {
 	int i;
-	struct vm_obj *obj = malloc(sizeof(struct vm_obj));
+	struct vm_obj *obj = myalloc(sizeof(struct vm_obj));
 	obj->tag = VM_OBJ_STACK;
 	obj->u.stack.size = s;
 	obj->u.stack.p = malloc(sizeof(vm_data) * s);
@@ -576,13 +576,13 @@ exec_code()
 				a = code[pc++];
 				break;
 			case CODE_CONSTSTR:
-				p = malloc(sizeof(struct vm_obj));
+				p = myalloc(sizeof(struct vm_obj));
 				p->tag = VM_OBJ_STRING;
 				p->u.string = (code[pc++] - 3);
 				a = (vm_data)p | 3;
 				break;
 			case CODE_CONSTSYM:
-				p = malloc(sizeof(struct vm_obj));
+				p = myalloc(sizeof(struct vm_obj));
 				p->tag = VM_OBJ_SYMBOL;
 				p->u.symbol = (code[pc++] - 3);
 				a = (vm_data)p | 3;
@@ -646,7 +646,7 @@ exec_code()
 				printf("\n");
 				break;
 			case CODE_CONS:
-				p = malloc(sizeof(struct vm_obj));
+				p = myalloc(sizeof(struct vm_obj));
 				p->tag = VM_OBJ_PAIR;
 				a = (vm_data)p |  3;
 

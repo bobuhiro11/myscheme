@@ -3,7 +3,7 @@ CFLAGS     		:= -g -w
 TARGET				:= vm/myscmvm
 COMPILER 			:= compiler/main.scm
 
-SOURCES_C     := vm/vm.c vm/hashtable.c
+SOURCES_C     := vm/vm.c vm/hashtable.c vm/gc.c
 HEADER				:= vm/common.h
 
 TESTS					:= $(wildcard test/*.scm)

@@ -16,6 +16,7 @@
 #define CODE_MAX 	2048
 #define HEAP_CODE_BASE 	(CODE_MAX * 2 / 3)
 #define STACK_MAX 	1024
+#define POOL_MAX 	10000000000
 
 #define CODE_HALT 		0x00000002	/* for vm_code */
 #define CODE_REFER_LOCAL 	0x01000002
@@ -127,6 +128,9 @@ typedef intptr_t vm_data;
 
 struct vm_obj
 {
+	/* memory allocated size contain string, closure etc. */
+	int size;
+
 	unsigned char tag;
 	union{
 		char *string;
@@ -162,6 +166,8 @@ vm_data ht_find(const struct hashtable *table, const char *key);
 void ht_dump(const struct hashtable *table);
 struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
+
+void *myalloc(size_t s);
 
 /***************************************************
  * external variable definition
