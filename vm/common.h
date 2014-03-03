@@ -85,7 +85,8 @@
 #define IS_CODE_TRUE(x)		((x & 0xF) == 1)
 #define IS_CODE_FALSE(x)	((x & 0xF) == 9)
 #define IS_CODE_NIL(x)		((x & 0xF) == 13)
-#define IS_CODE_STRING(x)	((x & 0x3) == 3)
+#define IS_CODE_STRING(x)	((x & 0x3) == 3 && (*((char*)(x-3))) != VM_OBJ_STACK)
+#define IS_CODE_STACK(x)	((x & 0x3) == 3 && (*((char*)(x-3))) == VM_OBJ_STACK)
 #define IS_CODE_CODE(x)		((x & 3) == 2)
 
 #define IS_NUM(x) 		((x & 3) == 0)

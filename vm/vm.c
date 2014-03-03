@@ -146,20 +146,11 @@ dump_code(int max)
 				case CODE_REFER_GLOBAL:  printf(" ;REFER_GLOBAL"); break;
 				case CODE_INDIRECT:      printf(" ;INDIRECT"); break;
 
-				case CODE_CONSTNUM:      printf(" ;CONSTNUM"); break;
-				case CODE_CONSTSTR:      printf(" ;CONSTSTR"); break;
-				case CODE_CONSTSYM:      printf(" ;CONSTSYM"); break;
-				case CODE_CONSTNIL:      printf(" ;CONSTNIL"); break;
-				case CODE_CONSTBOO:      printf(" ;CONSTBOO"); break;
-
 				case CODE_CLOSE:         printf(" ;CLOSE"); break;
 				case CODE_BOX:           printf(" ;BOX"); break;
 				case CODE_TEST:          printf(" ;TEST"); break;
 				case CODE_PLUS:          printf(" ;PLUS"); break;
 				case CODE_MINUS:         printf(" ;MINUS"); break;
-				case CODE_MUL:         	 printf(" ;MUL"); break;
-				case CODE_DIV:           printf(" ;DIV"); break;
-				case CODE_MODULO:        printf(" ;MODULO"); break;
 				case CODE_EQUAL:         printf(" ;EQUAL"); break;
 				case CODE_ASSIGN_LOCAL:  printf(" ;ASSIGN_LOCAL"); break;
 				case CODE_ASSIGN_FREE:   printf(" ;ASSIGN_FREE"); break;
@@ -174,20 +165,36 @@ dump_code(int max)
 				case CODE_RETURN:        printf(" ;RETURN"); break;
 				case CODE_GT:        	 printf(" ;GT"); break;
 				case CODE_LT:        	 printf(" ;LT"); break;
-
-				case CODE_DISPLAY:       printf(" ;DISPLAY"); break;
-				case CODE_NEWLINE:     	 printf(" ;NEWLINE"); break;
-				case CODE_DISASM:     	 printf(" ;DISASM"); break;
+				case CODE_CONS:		 printf(" ;CONS"); break;
+				case CODE_CAR:		 printf(" ;CAR"); break;
+				case CODE_CDR:		 printf(" ;CDR"); break;
 
 				case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
+				case CODE_DISPLAY:       printf(" ;DISPLAY"); break;
+				case CODE_NEWLINE:     	 printf(" ;NEWLINE"); break;
+				case CODE_MUL:         	 printf(" ;MUL"); break;
+				case CODE_DIV:           printf(" ;DIV"); break;
+				case CODE_MODULO:        printf(" ;MODULO"); break;
+				case CODE_DISASM:     	 printf(" ;DISASM"); break;
+
+				case CODE_CONSTNIL:      printf(" ;CONSTNIL"); break;
+				case CODE_CONSTBOO:      printf(" ;CONSTBOO"); break;
+				case CODE_CONSTSYM:      printf(" ;CONSTSYM"); break;
+				case CODE_CONSTSTR:      printf(" ;CONSTSTR"); break;
+				case CODE_CONSTNUM:      printf(" ;CONSTNUM"); break;
+
 				case CODE_TRUE:          printf(" ;TRUE"); break;
 				case CODE_FALSE:         printf(" ;FALSE"); break;
 				case CODE_NIL:           printf(" ;NIL"); break;
+
 			}
 		}else if(IS_CODE_NUMBER(code[i])){
 			printf(" ;%d", code[i] >> 2);
 		}else if(IS_CODE_STRING(code[i])){
 			printf(" ;%s", code[i] - 3);
+		}else if(IS_CODE_STACK(code[i])){
+			printf(" ;stack ");
+			dump_stack_serial(code[i]);
 		}else if(IS_CODE_NIL(code[i])){
 			printf(" ;NIL");
 		}else if(IS_CODE_TRUE(code[i])){
@@ -346,6 +353,24 @@ write_vm_data(vm_data data)
 			write_vm_data(p->u.pair.cdr);
 			printf(")");
 		}
+	}
+}
+
+/*
+ * dump stack for NUATE instraction in disasm
+ */
+void
+dump_stack_serial(vm_code code)
+{
+	int i;
+	int size = ((struct vm_obj*)(code-3))->u.stack.size;
+	vm_data *p = ((struct vm_obj*)(code-3))->u.stack.p;
+	for(i=0;i<size;i++){
+		printf("\n");
+		printf("%15s%2d ","",i);
+		dump_address(p[i]);
+		printf(" ;");
+		write_vm_data(p[i]);
 	}
 }
 
