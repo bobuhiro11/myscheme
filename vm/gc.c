@@ -24,7 +24,7 @@ gc_init()
 }
 
 struct vm_obj *
-myalloc(size_t s)
+myalloc(size_t s, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *rc;
 	int size;
@@ -35,7 +35,7 @@ myalloc(size_t s)
 
 	/* GC */
 	if(from_free + size > from_start + POOL_MAX){
-		copying();
+		copying(reg_a,reg_c,reg_s);
 		gc_dump();
 		ht_dump(global_table);
 		if(from_free + size > from_start + POOL_MAX){
@@ -90,7 +90,7 @@ copy(struct vm_obj *obj)
 }
 
 void
-copying()
+copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *scan;
 	int i;
@@ -112,7 +112,6 @@ copying()
 			}
 		}
 	}
-	
 
 	while(scan < to_free){
 		/* copy of child */
@@ -154,7 +153,7 @@ copying()
  *
  */
 vm_data
-gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s)
+gc_alloc_closure(int n, int bodyadr, int ebodyadr, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *obj;
 	vm_data rc;
@@ -163,33 +162,33 @@ gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s)
 	int size;
 
 	size = sizeof(struct vm_obj) + sizeof(vm_data) * (n+2);
-	obj = myalloc(size);
+	obj = myalloc(size, reg_a, reg_c, reg_s);
 	obj->tag 	   = VM_OBJ_CLOSURE;
 	//closure     = (char*)obj + sizeof(struct vm_obj);
 	//closure[0]  = bodyadr << 2;
 	//closure[1]  = ebodyadr << 2;
-	
+	//
 	rc = ((vm_data)obj) | 3;
 	SET_CLOSURE_BODY(rc,bodyadr);
 	SET_CLOSURE_EBODY(rc,ebodyadr);
 
 	for(i=0;i<n;i++){
-		//closure[i+2] = INDEX(s,i);
-		SET_CLOSURE_INDEX(rc,i,INDEX(s,i));
+		//closure[i+2] = INDEX(reg_s,i);
+		SET_CLOSURE_INDEX(rc,i,INDEX(reg_s,i));
 	}
 
 	return rc;
 }
 
 vm_data
-gc_alloc_string(char *str)
+gc_alloc_string(char *str, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *obj;
 	char *string;
 	int size;
 
 	size = sizeof(struct vm_obj) + strlen(str) +1;
-	obj = myalloc(size);
+	obj = myalloc(size, reg_a, reg_c, reg_s);
 	obj->tag = VM_OBJ_STRING;
 	string = (char*)obj + sizeof(struct vm_obj);
 	strcpy(string,str);
@@ -198,14 +197,14 @@ gc_alloc_string(char *str)
 }
 
 vm_data
-gc_alloc_symbol(char *str)
+gc_alloc_symbol(char *str, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *obj;
 	char *symbol;
 	int size;
 
 	size = sizeof(struct vm_obj) + strlen(str) +1;
-	obj = myalloc(size);
+	obj = myalloc(size, reg_a, reg_c, reg_s);
 	obj->tag = VM_OBJ_SYMBOL;
 	symbol = (char*)obj + sizeof(struct vm_obj);
 	strcpy(symbol, str);
@@ -214,19 +213,19 @@ gc_alloc_symbol(char *str)
 }
 
 vm_data
-gc_alloc_stack(int s)
+gc_alloc_stack(vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *obj;
 	vm_data *_stack;
 	int i,size;
 
-	size = sizeof(struct vm_obj) + sizeof(vm_data) * s;
-	obj = myalloc(size);
+	size = sizeof(struct vm_obj) + sizeof(vm_data) * reg_s;
+	obj = myalloc(size, reg_a, reg_c, reg_s);
 	obj->tag = VM_OBJ_STACK;
-	obj->u.stack.size = s;
+	obj->u.stack.size = reg_s;
 	_stack = (char*)obj + sizeof(struct vm_obj);
 
-	for(i=0;i<s;i++){
+	for(i=0;i<reg_s;i++){
 		_stack[i] = stack[i];
 	}
 
@@ -234,11 +233,11 @@ gc_alloc_stack(int s)
 }
 
 vm_data
-gc_alloc_pair(vm_data car, vm_data cdr)
+gc_alloc_pair(vm_data car, vm_data cdr, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *obj;
 
-	obj = myalloc(sizeof(struct vm_obj));
+	obj = myalloc(sizeof(struct vm_obj), reg_a, reg_c, reg_s);
 	obj->tag = VM_OBJ_PAIR;
 	obj->u.pair.car = car;
 	obj->u.pair.cdr = cdr;
@@ -259,7 +258,7 @@ main(void)
 	ht_dump(global_table);
 
 	for(i=0;i<1000;i++){
-		myalloc(100);
+		myalloc(100,NULL,NULL,0);
 	}
 
 	return 0;

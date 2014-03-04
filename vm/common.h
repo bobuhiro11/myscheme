@@ -185,12 +185,15 @@ struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
 
 void gc_init();
-struct vm_obj *myalloc(size_t s);
-vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s);
-vm_data gc_alloc_string(char *str);
-vm_data gc_alloc_symbol(char *symbol);
-vm_data gc_alloc_stack(int s);
-vm_data gc_alloc_pair(vm_data car, vm_data cdr);
+vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr,
+		vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data gc_alloc_string(char *str,
+		vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data gc_alloc_symbol(char *symbol,
+		vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data gc_alloc_stack(vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data gc_alloc_pair(vm_data car, vm_data cdr,
+		vm_data *reg_a, vm_data *reg_c, int reg_s);
 
 /***************************************************
  * external variable definition
