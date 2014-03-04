@@ -17,4 +17,4 @@
         "nyaafnaynayanana"
         "yanaynnaynayayana"
         (death_eater (- i 1))))))
-(death_eater 100000000000)
+(death_eater 1000)
