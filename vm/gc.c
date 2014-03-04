@@ -234,12 +234,14 @@ gc_alloc_stack(int s)
 }
 
 vm_data
-gc_alloc_pair()
+gc_alloc_pair(vm_data car, vm_data cdr)
 {
 	struct vm_obj *obj;
 
 	obj = myalloc(sizeof(struct vm_obj));
 	obj->tag = VM_OBJ_PAIR;
+	obj->u.pair.car = car;
+	obj->u.pair.cdr = cdr;
 
 	return ((vm_data)obj) | 3;
 }

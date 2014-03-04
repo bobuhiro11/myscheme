@@ -624,10 +624,10 @@ exec_code()
 				copying();
 				break;
 			case CODE_CONS:
-				a = gc_alloc_pair();
+				a = gc_alloc_pair(INDEX(s,0), INDEX(s,1));
 
-				CAR(a) = INDEX(s,0);
-				CDR(a) = INDEX(s,1);
+				//CAR(a) = INDEX(s,0);
+				//CDR(a) = INDEX(s,1);
 				break;
 			case CODE_CAR:
 				a = CAR(INDEX(s,0));
@@ -746,6 +746,10 @@ init_code()
 void
 ht_init(struct hashtable *table)
 {
+	ht_insert(table, "boss",
+			gc_alloc_pair(gc_alloc_string("orenosubete"),
+				gc_alloc_pair(gc_alloc_string("damedamehime"),
+					VM_DATA_NIL)));
 	ht_insert(table, "x",        123<<2);
 	ht_insert(table, "y",        256<<2);
 	ht_insert(table, "hoge",     gc_alloc_string("hogehogemanju"));
