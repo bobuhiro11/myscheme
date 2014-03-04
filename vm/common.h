@@ -17,6 +17,7 @@
 #define HEAP_CODE_BASE 	(CODE_MAX * 2 / 3)
 #define STACK_MAX 	1024
 #define POOL_MAX 	2000000000
+//#define POOL_MAX 	2000
 
 #define CODE_HALT 		0x00000002	/* for vm_code */
 #define CODE_REFER_LOCAL 	0x01000002
@@ -137,6 +138,7 @@ struct vm_obj
 	 * set by myalloc() and must not change the value.
 	 */
 	int size;
+	struct vm_obj *forwarding;
 
 	union{
 		char *string;
@@ -147,8 +149,8 @@ struct vm_obj
 			int size;
 		} stack;
 		struct {
-			vm_data *car;
-			vm_data *cdr;
+			vm_data car;
+			vm_data cdr;
 		} pair;
 	} u;
 };
