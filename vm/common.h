@@ -178,6 +178,8 @@ struct vm_obj *myalloc(size_t s);
 vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s);
 vm_data gc_alloc_string(char *str);
 vm_data gc_alloc_symbol(char *symbol);
+vm_data gc_alloc_stack(int s);
+vm_data gc_alloc_pair();
 
 /***************************************************
  * external variable definition

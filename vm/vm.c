@@ -410,23 +410,6 @@ shift_args(int n, int m, int s)
 	}
 }
 
-/*
- * save stack
- */
-vm_data
-save_stack(int s)
-{
-	int i;
-	struct vm_obj *obj = myalloc(sizeof(struct vm_obj));
-	obj->tag = VM_OBJ_STACK;
-	obj->u.stack.size = s;
-	obj->u.stack.p = malloc(sizeof(vm_data) * s);
-	for(i=0;i<s;i++){
-		obj->u.stack.p[i] = stack[i];
-	}
-	return ((vm_data)obj) | 3;
-}
-
 int
 restore_stack(vm_data x)
 {
@@ -453,7 +436,7 @@ insert_continuation_code(int s)
 	code[rom_last_address + 1] = CODE_REFER_LOCAL;
 	code[rom_last_address + 2] = 0;
 	code[rom_last_address + 3] = CODE_NUATE;
-	code[rom_last_address + 4] = save_stack(s);
+	code[rom_last_address + 4] = gc_alloc_stack(s);
 	code[rom_last_address + 5] = CODE_RETURN;
 	code[rom_last_address + 6] = 0;
 
@@ -629,9 +612,7 @@ exec_code()
 				printf("\n");
 				break;
 			case CODE_CONS:
-				p = myalloc(sizeof(struct vm_obj));
-				p->tag = VM_OBJ_PAIR;
-				a = (vm_data)p |  3;
+				a = gc_alloc_pair();
 
 				CAR(a) = INDEX(s,0);
 				CDR(a) = INDEX(s,1);

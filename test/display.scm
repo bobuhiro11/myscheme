@@ -13,4 +13,4 @@
                      0
                      (begin  (display ".")
                              (_space (- i 1)))))])
-  (next 100))
+  (next 20))

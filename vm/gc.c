@@ -86,3 +86,33 @@ gc_alloc_symbol(char *str)
 
 	return ((vm_data)obj) | 3;
 }
+
+vm_data
+gc_alloc_stack(int s)
+{
+	struct vm_obj *obj;
+	int i,size;
+
+	size = sizeof(struct vm_obj) + sizeof(vm_data) * s;
+	obj = myalloc(size);
+	obj->tag = VM_OBJ_STACK;
+	obj->u.stack.size = s;
+	obj->u.stack.p = (char*)obj + sizeof(struct vm_obj);
+
+	for(i=0;i<s;i++){
+		obj->u.stack.p[i] = stack[i];
+	}
+
+	return ((vm_data)obj) | 3;
+}
+
+vm_data
+gc_alloc_pair()
+{
+	struct vm_obj *obj;
+
+	obj = malloc(sizeof(struct vm_obj));
+	obj->tag = VM_OBJ_PAIR;
+
+	return ((vm_data)obj) | 3;
+}
