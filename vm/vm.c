@@ -760,6 +760,7 @@ dump_info()
 	printf("STACK_MAX:      %7d\n",STACK_MAX);
 }
 
+#ifndef GC_MAIN
 int
 main(int argc, char **argv)
 {
@@ -789,3 +790,4 @@ main(int argc, char **argv)
 
 	return 0;
 }
+#endif

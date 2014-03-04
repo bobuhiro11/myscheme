@@ -215,8 +215,9 @@ gc_alloc_pair()
 	return ((vm_data)obj) | 3;
 }
 
+#ifdef GC_MAIN
 int
-gc_test(void)
+main(void)
 {
 	gc_init();
 	int p = 0;
@@ -241,3 +242,4 @@ gc_test(void)
 	printf("expect size %X\n",p);
 	return 0;
 }
+#endif
