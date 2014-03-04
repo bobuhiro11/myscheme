@@ -65,6 +65,8 @@ get_vm_code(const char* s)
 	else if(!strcmp(s,"display"))		rc =  CODE_DISPLAY;
 	else if(!strcmp(s,"disasm"))		rc =  CODE_DISASM;
 	else if(!strcmp(s,"newline"))		rc =  CODE_NEWLINE;
+	else if(!strcmp(s,"gcrun"))		rc =  CODE_GCRUN;
+	else if(!strcmp(s,"gcdump"))		rc =  CODE_GCDUMP;
 	else if(!strcmp(s,"#t"))		rc =  CODE_TRUE;
 	else if(!strcmp(s,"#f"))		rc =  CODE_FALSE;
 	else if(!strcmp(s,"nil")
@@ -172,6 +174,8 @@ dump_code(int max)
 				case CODE_IS_NULL:     	 printf(" ;IS_NULL"); break;
 				case CODE_DISPLAY:       printf(" ;DISPLAY"); break;
 				case CODE_NEWLINE:     	 printf(" ;NEWLINE"); break;
+				case CODE_GCRUN:     	 printf(" ;GCRUN"); break;
+				case CODE_GCDUMP:     	 printf(" ;GCDUMP"); break;
 				case CODE_MUL:         	 printf(" ;MUL"); break;
 				case CODE_DIV:           printf(" ;DIV"); break;
 				case CODE_MODULO:        printf(" ;MODULO"); break;
@@ -610,6 +614,12 @@ exec_code()
 				break;
 			case CODE_NEWLINE:
 				printf("\n");
+				break;
+			case CODE_GCDUMP:
+				gc_dump();
+				break;
+			case CODE_GCRUN:
+				copying();
 				break;
 			case CODE_CONS:
 				a = gc_alloc_pair();

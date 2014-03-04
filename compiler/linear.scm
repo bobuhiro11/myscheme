@@ -14,6 +14,12 @@
                  [newline (x)
                               (cons (list adr 'newline)
                                     (3imp->linear x (+ adr 1)))]
+                 [gcrun (x)
+                              (cons (list adr 'gcrun)
+                                    (3imp->linear x (+ adr 1)))]
+                 [gcdump (x)
+                              (cons (list adr 'gcdump)
+                                    (3imp->linear x (+ adr 1)))]
                  [display (x)
                               (cons (list adr 'display)
                                     (3imp->linear x (+ adr 1)))]

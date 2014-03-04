@@ -35,7 +35,7 @@ myalloc(size_t s)
 
 	/* GC */
 	if(from_free + size > from_start + POOL_MAX){
-		copying(&root_reg);
+		copying();
 		gc_dump();
 		if(from_free + size > from_start + POOL_MAX){
 			fprintf(stderr, "Error: cannot allocate.\n");
@@ -88,16 +88,16 @@ copy(struct vm_obj *obj)
 }
 
 void
-copying(vm_data *root)
+copying()
 {
 	struct vm_obj *scan;
 
 	scan = to_free = to_start;
 
 	/* root */
-	if(IS_OBJ(*root)){
-		*root = copy( (*root) -3);
-		*root = ((vm_data)*root) | 3;
+	if(IS_OBJ(root_reg)){
+		root_reg = copy( root_reg -3);
+		root_reg = ((vm_data)root_reg) | 3;
 	}
 
 	while(scan < to_free){
@@ -123,6 +123,9 @@ copying(vm_data *root)
 	/* calc from_free, to_free */
 	from_free = to_free;
 	to_free = to_start;
+
+	/* memset to space */
+	memset(to_start, 0x00, POOL_MAX);
 }
 
 /*

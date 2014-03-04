@@ -245,6 +245,10 @@
                     (compile x e s (list 'disasm next))]
                   [newline ()
                     (list 'newline next)]
+                  [gcrun ()
+                    (list 'gcrun next)]
+                  [gcdump ()
+                    (list 'gcdump next)]
                   [quote (obj)
                          (cond
                            [(null? x)
