@@ -341,12 +341,12 @@ write_vm_data(vm_data data)
 	else if(IS_NIL(data))		printf("()");
 	else if(IS_UNDEFINED(data))	printf("undef");
 	else if(IS_END_OF_FRAME(data))	printf("end_of_frame");
-	else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 	else if(IS_OBJ(data)){
 		/* object */
 		if(IS_BOX(data))		{ printf("<box>"); write_vm_data(unbox(data)); }
 		else if(IS_STRING(data))	printf("\"%s\"", STRING(data));
 		else if(IS_SYMBOL(data))	printf("%s", SYMBOL(data));
+		else if(IS_CLOSURE(data))	printf("closure<%d,%d>",CLOSURE_BODY(data),CLOSURE_EBODY(data));
 		else if(IS_PAIR(data)) {
 			if(is_list(data)){
 				write_vm_list(data,1);
@@ -363,7 +363,7 @@ write_vm_data(vm_data data)
 			dump_address(data);
 			printf(" ;Bad data");
 		}
-		//printf("[%dB]",OBJ_SIZE(data));
+		printf("[%dB]",OBJ_SIZE(data));
 	}
 }
 
@@ -746,6 +746,7 @@ ht_init(struct hashtable *table)
 {
 	ht_insert(table, "x",        123<<2);
 	ht_insert(table, "y",        256<<2);
+	ht_insert(table, "hoge",     gc_alloc_string("hogehogemanju"));
 	ht_insert(table, "=",        gc_alloc_closure(0, HEAP_CODE_BASE +  0, HEAP_CODE_BASE +  2,0));
 	ht_insert(table, "-",        gc_alloc_closure(0, HEAP_CODE_BASE +  3, HEAP_CODE_BASE +  5,0));
 	ht_insert(table, "+",        gc_alloc_closure(0, HEAP_CODE_BASE +  6, HEAP_CODE_BASE +  8,0));

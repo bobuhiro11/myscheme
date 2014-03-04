@@ -11,7 +11,7 @@ gc_dump()
 {
 	printf("=== gc ===\n");
 	printf("from_start: %018p\n", from_start);
-	printf("from_free:  %018p\n", from_free);
+	printf("from_free:  %018p[%+d]\n", from_free, from_free - from_start);
 	printf("to_start:   %018p\n", to_start);
 	printf("to_free:    %018p\n", to_free);
 }
@@ -37,6 +37,7 @@ myalloc(size_t s)
 	if(from_free + size > from_start + POOL_MAX){
 		copying();
 		gc_dump();
+		ht_dump(global_table);
 		if(from_free + size > from_start + POOL_MAX){
 			fprintf(stderr, "Error: cannot allocate.\n");
 			exit(1);
@@ -59,10 +60,11 @@ myalloc(size_t s)
 int
 is_pointer_to_heap(struct obj *forwarding)
 {
-	if(to_start <= forwarding && forwarding <= (char*)to_start + POOL_MAX)
+	if(to_start <= forwarding && forwarding <= (char*)to_start + POOL_MAX){
 		return 1;
-	else
+	}else{
 		return 0;
+	}
 }
 
 void
@@ -91,14 +93,26 @@ void
 copying()
 {
 	struct vm_obj *scan;
+	int i;
 
 	scan = to_free = to_start;
 
-	/* root */
-	if(IS_OBJ(root_reg)){
-		root_reg = copy( root_reg -3);
-		root_reg = ((vm_data)root_reg) | 3;
+	/* sample root */
+	//if(IS_OBJ(root_reg)){
+	//	root_reg = copy( root_reg -3);
+	//	root_reg = ((vm_data)root_reg) | 3;
+	//}
+
+	/* hashtable */
+	for(i=0;i<HASHTABLE_SIZE;i++){
+		if(global_table[i].key[0] != '\0'){
+			if(IS_OBJ(global_table[i].data)){
+				global_table[i].data = copy( global_table[i].data -3);
+				global_table[i].data  = ((vm_data) global_table[i].data) | 3;
+			}
+		}
 	}
+	
 
 	while(scan < to_free){
 		/* copy of child */
@@ -124,8 +138,10 @@ copying()
 	from_free = to_free;
 	to_free = to_start;
 
-	/* memset to space */
-	memset(to_start, 0x00, POOL_MAX);
+	/* if add this code, closure object gc failure???? */
+	// for(i=0;i<POOL_MAX;i++){
+	// 	*((char*)(to_start) + i) = 0x00;
+	// }
 }
 
 /*
@@ -226,6 +242,10 @@ main(void)
 	int p = 0;
 	int i;
 
+	global_table = ht_create();
+	ht_init(global_table);
+	ht_dump(global_table);
+
 	root_reg = gc_alloc_pair();
 	CAR(root_reg) = gc_alloc_string("hello");
 	CDR(root_reg) = gc_alloc_pair();
@@ -239,7 +259,7 @@ main(void)
 	p += OBJ_SIZE(CDR(CDR(root_reg)));
 
 	for(i=0;i<1000;i++){
-		myalloc(10000000987);
+		myalloc(100);
 	}
 
 	printf("expect size %X\n",p);

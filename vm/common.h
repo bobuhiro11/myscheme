@@ -17,7 +17,7 @@
 #define HEAP_CODE_BASE 	(CODE_MAX * 2 / 3)
 #define STACK_MAX 	1024
 #define POOL_MAX 	2000000000
-//#define POOL_MAX 	2000
+//#define POOL_MAX 	20000
 
 #define CODE_HALT 		0x00000002	/* for vm_code */
 #define CODE_REFER_LOCAL 	0x01000002
@@ -190,5 +190,6 @@ vm_data gc_alloc_pair();
  ***************************************************/
 extern vm_code code[CODE_MAX];
 extern vm_data stack[STACK_MAX];
+extern struct hashtable *global_table;
 
 #endif

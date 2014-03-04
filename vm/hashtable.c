@@ -98,6 +98,8 @@ ht_dump(const struct hashtable *table)
 	for(i=0;i<HASHTABLE_SIZE;i++)
 		if(table[i].key[0] != '\0'){
 			printf("%-8s = ", table[i].key);
+			dump_address(table[i].data);
+			printf(" ;");
 			write_vm_data(table[i].data);
 			printf("\n");
 		}
