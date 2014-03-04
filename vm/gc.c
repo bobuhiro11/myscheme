@@ -139,9 +139,9 @@ copying()
 	to_free = to_start;
 
 	/* if add this code, closure object gc failure???? */
-	// for(i=0;i<POOL_MAX;i++){
-	// 	*((char*)(to_start) + i) = 0x00;
-	// }
+	for(i=0;i<POOL_MAX;i++){
+		*((char*)(to_start) + i) = 0x00;
+	}
 }
 
 /*
@@ -157,34 +157,42 @@ vm_data
 gc_alloc_closure(int n, int bodyadr, int ebodyadr, int s)
 {
 	struct vm_obj *obj;
+	vm_data rc;
+	vm_data *closure;
 	int i;
 	int size;
 
 	size = sizeof(struct vm_obj) + sizeof(vm_data) * (n+2);
 	obj = myalloc(size);
 	obj->tag 	   = VM_OBJ_CLOSURE;
-	obj->u.closure     = (char*)obj + sizeof(struct vm_obj);
-	obj->u.closure[0]  = bodyadr << 2;
-	obj->u.closure[1]  = ebodyadr << 2;
+	//closure     = (char*)obj + sizeof(struct vm_obj);
+	//closure[0]  = bodyadr << 2;
+	//closure[1]  = ebodyadr << 2;
+	
+	rc = ((vm_data)obj) | 3;
+	SET_CLOSURE_BODY(rc,bodyadr);
+	SET_CLOSURE_EBODY(rc,ebodyadr);
 
 	for(i=0;i<n;i++){
-		obj->u.closure[i+2] = INDEX(s,i);
+		//closure[i+2] = INDEX(s,i);
+		SET_CLOSURE_INDEX(rc,i,INDEX(s,i));
 	}
 
-	return ((vm_data)obj) | 3;
+	return rc;
 }
 
 vm_data
 gc_alloc_string(char *str)
 {
 	struct vm_obj *obj;
+	char *string;
 	int size;
 
 	size = sizeof(struct vm_obj) + strlen(str) +1;
 	obj = myalloc(size);
 	obj->tag = VM_OBJ_STRING;
-	obj->u.string = (char*)obj + sizeof(struct vm_obj);
-	strcpy(obj->u.string,str);
+	string = (char*)obj + sizeof(struct vm_obj);
+	strcpy(string,str);
 
 	return ((vm_data)obj) | 3;
 }
@@ -193,13 +201,14 @@ vm_data
 gc_alloc_symbol(char *str)
 {
 	struct vm_obj *obj;
+	char *symbol;
 	int size;
 
 	size = sizeof(struct vm_obj) + strlen(str) +1;
 	obj = myalloc(size);
 	obj->tag = VM_OBJ_SYMBOL;
-	obj->u.string = (char*)obj + sizeof(struct vm_obj);
-	strcpy(obj->u.string,str);
+	symbol = (char*)obj + sizeof(struct vm_obj);
+	strcpy(symbol, str);
 
 	return ((vm_data)obj) | 3;
 }
@@ -208,16 +217,17 @@ vm_data
 gc_alloc_stack(int s)
 {
 	struct vm_obj *obj;
+	vm_data *_stack;
 	int i,size;
 
 	size = sizeof(struct vm_obj) + sizeof(vm_data) * s;
 	obj = myalloc(size);
 	obj->tag = VM_OBJ_STACK;
 	obj->u.stack.size = s;
-	obj->u.stack.p = (char*)obj + sizeof(struct vm_obj);
+	_stack = (char*)obj + sizeof(struct vm_obj);
 
 	for(i=0;i<s;i++){
-		obj->u.stack.p[i] = stack[i];
+		_stack[i] = stack[i];
 	}
 
 	return ((vm_data)obj) | 3;
@@ -246,23 +256,10 @@ main(void)
 	ht_init(global_table);
 	ht_dump(global_table);
 
-	root_reg = gc_alloc_pair();
-	CAR(root_reg) = gc_alloc_string("hello");
-	CDR(root_reg) = gc_alloc_pair();
-	CAR(CDR(root_reg)) = gc_alloc_closure(0,100,200,0);
-	CDR(CDR(root_reg)) = gc_alloc_symbol("hello");
-
-	p =  OBJ_SIZE(root_reg);
-	p += OBJ_SIZE(CAR(root_reg));
-	p += OBJ_SIZE(CDR(root_reg));
-	p += OBJ_SIZE(CAR(CDR(root_reg)));
-	p += OBJ_SIZE(CDR(CDR(root_reg)));
-
 	for(i=0;i<1000;i++){
 		myalloc(100);
 	}
 
-	printf("expect size %X\n",p);
 	return 0;
 }
 #endif

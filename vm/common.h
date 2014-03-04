@@ -16,8 +16,12 @@
 #define CODE_MAX 	2048
 #define HEAP_CODE_BASE 	(CODE_MAX * 2 / 3)
 #define STACK_MAX 	1024
-#define POOL_MAX 	2000000000
-//#define POOL_MAX 	20000
+
+#ifdef GC_MAIN
+	#define POOL_MAX 	20000
+#else
+	#define POOL_MAX 	2000000000
+#endif
 
 #define CODE_HALT 		0x00000002	/* for vm_code */
 #define CODE_REFER_LOCAL 	0x01000002
@@ -107,17 +111,20 @@
 #define IS_STRING(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STRING)
 #define IS_SYMBOL(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_SYMBOL)
 
-#define CLOSURE_BODY(x)		(((struct vm_obj*)((x)-3)) -> u.closure[0] >> 2)
-#define CLOSURE_EBODY(x)	(((struct vm_obj*)((x)-3)) -> u.closure[1] >> 2)
-#define CLOSURE_INDEX(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[(n) + 2])
-#define SET_CLOSURE_BODY(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[0]  = n << 2)
-#define SET_CLOSURE_EBODY(x,n)	(((struct vm_obj*)((x)-3)) -> u.closure[1]  = n << 2)
+#define CLOSURE_INDEX(x,n)	\
+	( (*( ((vm_data*)((x) - 3 + sizeof(struct vm_obj))) + (n) + 2)) >> 2)
+#define CLOSURE_BODY(x)		CLOSURE_INDEX(x,-2)
+#define CLOSURE_EBODY(x)	CLOSURE_INDEX(x,-1)
+#define SET_CLOSURE_INDEX(x,i,n)  \
+	( *( ((vm_data*)((x) - 3 + sizeof(struct vm_obj))) + (i) +2) = (n) <<2)
+#define SET_CLOSURE_BODY(x,n)	SET_CLOSURE_INDEX(x,-2,n)
+#define SET_CLOSURE_EBODY(x,n)	SET_CLOSURE_INDEX(x,-1,n)
 
 #define CAR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.car)
 #define CDR(x)			(((struct vm_obj*)((x)-3)) -> u.pair.cdr)
 
-#define STRING(x)		(((struct vm_obj*)((x)-3)) -> u.string)
-#define SYMBOL(x)		(((struct vm_obj*)((x)-3)) -> u.symbol)
+#define STRING(x)		((char*)( (x) - 3 + sizeof(struct vm_obj)))
+#define SYMBOL(x)		((char*)( (x) - 3 + sizeof(struct vm_obj)))
 
 #define PUSH(s,x)		(stack[s] = x, (s)+1)
 #define INDEX(s,n)		(stack[(s)-(n)-1])
@@ -143,11 +150,11 @@ struct vm_obj
 	struct vm_obj *forwarding;
 
 	union{
-		char *string;
-		char *symbol;
-		vm_data *closure;
+		//char *string;
+		//char *symbol;
+		//vm_data *closure;
 		struct {
-			vm_data *p;
+		//	vm_data *p;
 			int size;
 		} stack;
 		struct {

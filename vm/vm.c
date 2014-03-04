@@ -225,7 +225,7 @@ modify_stack(vm_data data)
 
 	stack = code[CLOSURE_BODY(data) + 3] - 3;
 	size  = stack->u.stack.size;
-	p     = stack->u.stack.p;
+	p     = (char*)stack + sizeof(struct vm_obj);
 
 	for(i=0;i<size;i++)
 		if(p[i] == VM_DATA_END_OF_FRAME && (p[i+1]>>2) < min_adr)
@@ -290,7 +290,7 @@ unbox(vm_data x)
 	if(IS_BOX(x)){
 		return *((vm_data*)(x-2));
 	}else{
-		fprintf(stderr, "Error: this is not box.\n");
+		fprintf(stderr, "Error: this is not box %018p in unbox.\n",x);
 		return VM_DATA_UNDEFINED;
 	}
 }
@@ -299,7 +299,7 @@ void
 setbox(vm_data box, vm_data x)
 {
 	if(!IS_BOX(box))
-		fprintf(stderr, "Error: this is not box.\n");
+		fprintf(stderr, "Error: this is not box %018p in setbox.\n",x);
 	*((vm_data*)(box-2)) = x;
 }
 
@@ -375,7 +375,7 @@ dump_stack_serial(vm_code code)
 {
 	int i;
 	int size = ((struct vm_obj*)(code-3))->u.stack.size;
-	vm_data *p = ((struct vm_obj*)(code-3))->u.stack.p;
+	vm_data *p = ((char*)(code-3)) + sizeof(struct vm_obj);
 	for(i=0;i<size;i++){
 		printf("\n");
 		printf("%15s%2d ","",i);
@@ -419,14 +419,16 @@ restore_stack(vm_data x)
 {
 	int i,n;
 	struct vm_obj *obj = x-3;
+	vm_data *p;
 
 	if(!IS_STACK(x)){
 		fprintf(stderr, "Error: this is not stack object.\n");
 	}
 
 	n = obj->u.stack.size;
+	p = (char*)obj + sizeof(struct vm_obj);
 	for(i=0;i<n;i++){
-		stack[i] = obj->u.stack.p[i];
+		stack[i] = p[i];
 	}
 	return n;
 }
