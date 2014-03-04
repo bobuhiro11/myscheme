@@ -529,15 +529,15 @@ exec_code()
 				return a;
 			case CODE_REFER_LOCAL:
 				a = INDEX(argp, code[pc++]>>2);
-				myalloc(7);
+				//myalloc(7,&a,&c,s);
 				break;
 			case CODE_REFER_FREE:
 				a = CLOSURE_INDEX(c, code[pc++]>>2);
-				myalloc(6);
+				//myalloc(6,&a,&c,s);
 				break;
 			case CODE_REFER_GLOBAL:
 				a = ht_find(global_table, code[pc++]-3);
-				myalloc(12);
+				//myalloc(12,&a,&c,s);
 				break;
 			case CODE_INDIRECT:
 				a = unbox(a);

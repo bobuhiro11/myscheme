@@ -20,7 +20,8 @@
 #ifdef GC_MAIN
 	#define POOL_MAX 	20000
 #else
-	#define POOL_MAX 	2000000000
+//	#define POOL_MAX 	2000000000
+	#define POOL_MAX 	20000
 #endif
 
 #define CODE_HALT 		0x00000002	/* for vm_code */

@@ -36,8 +36,6 @@ myalloc(size_t s, vm_data *reg_a, vm_data *reg_c, int reg_s)
 	/* GC */
 	if(from_free + size > from_start + POOL_MAX){
 		copying(reg_a,reg_c,reg_s);
-		gc_dump();
-		ht_dump(global_table);
 		if(from_free + size > from_start + POOL_MAX){
 			fprintf(stderr, "Error: cannot allocate.\n");
 			exit(1);
@@ -97,11 +95,9 @@ copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 
 	scan = to_free = to_start;
 
-	/* sample root */
-	//if(IS_OBJ(root_reg)){
-	//	root_reg = copy( root_reg -3);
-	//	root_reg = ((vm_data)root_reg) | 3;
-	//}
+	/*
+	 * set root object fo GC :D
+	 */
 
 	/* hashtable */
 	for(i=0;i<HASHTABLE_SIZE;i++){
@@ -110,6 +106,26 @@ copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 				global_table[i].data = copy( global_table[i].data -3);
 				global_table[i].data  = ((vm_data) global_table[i].data) | 3;
 			}
+		}
+	}
+
+	/* accumlator */
+	if(reg_a != NULL && IS_OBJ(*reg_a)){
+		*reg_a = copy( (*reg_a) - 3);
+		*reg_a = (vm_data)(*reg_a) | 3;
+	}
+
+	/* closure */
+	if(reg_c != NULL && IS_OBJ(*reg_c)){
+		*reg_c = copy( (*reg_c) - 3);
+		*reg_c = (vm_data)(*reg_c) | 3;
+	}
+
+	/* stack */
+	for(i=0;i<reg_s;i++){
+		if(IS_OBJ(stack[i])){
+			stack[i] = copy( stack[i] - 3);
+			stack[i] = (vm_data)stack[i] | 3;
 		}
 	}
 
@@ -141,6 +157,10 @@ copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 	for(i=0;i<POOL_MAX;i++){
 		*((char*)(to_start) + i) = 0x00;
 	}
+	
+	fprintf(stderr, "Info: collecting garbage...\n");
+	//gc_dump();
+	//ht_dump(global_table);
 }
 
 /*
