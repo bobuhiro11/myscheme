@@ -86,6 +86,7 @@
 #define VM_OBJ_STACK		0x03
 #define VM_OBJ_PAIR		0x04
 #define VM_OBJ_SYMBOL		0x05
+#define VM_OBJ_BOX		0x06
 
 #define HASHTABLE_SIZE 		101
 #define KEYWORD_BUFLEN 		256
@@ -105,7 +106,7 @@
 #define IS_UNDEFINED(x) 	((x - VM_DATA_UNDEFINED) == 0)
 #define IS_END_OF_FRAME(x) 	((x - VM_DATA_END_OF_FRAME) == 0)
 #define IS_OBJ(x) 		(((x)&3)==3)
-#define IS_BOX(x) 		(((x)&3)==2)
+#define IS_BOX(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_BOX)
 #define IS_CLOSURE(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_CLOSURE)
 #define IS_STACK(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_STACK)
 #define IS_PAIR(x) 		(((x)&3)==3&&(((struct vm_obj*)(x-3))->tag)== VM_OBJ_PAIR)
@@ -127,7 +128,7 @@
 #define STRING(x)		((char*)( (x) - 3 + sizeof(struct vm_obj)))
 #define SYMBOL(x)		((char*)( (x) - 3 + sizeof(struct vm_obj)))
 
-#define PUSH(s,x)		(stack[s] = x, (s)+1)
+//#define PUSH(s,x)		(stack[s] = x, (s)+1)
 #define INDEX(s,n)		(stack[(s)-(n)-1])
 #define SET_INDEX(s,n,x)	(stack[(s)-(n)-1] = x)
 
@@ -154,10 +155,15 @@ struct vm_obj
 		//char *string;
 		//char *symbol;
 		//vm_data *closure;
+		vm_data box;
 		struct {
 		//	vm_data *p;
 			int size;
 		} stack;
+		struct {	
+			/* closure array size contain body start,end address */
+			int size;
+		} closure;
 		struct {
 			vm_data car;
 			vm_data cdr;
@@ -173,11 +179,39 @@ struct hashtable{
 /***************************************************
  * function prototype definition
  ***************************************************/
+/* vm.c */
+int push(int s, vm_data d);
 vm_code get_vm_code(const char* s);
+vm_code get_vm_code(const char* s);
+int get_code();
+void dump_address(vm_data data);
+vm_data modify_stack(vm_data data);
+vm_data save_closure_body(vm_data data);
+void assign_global(const char *s,vm_data data);
+vm_data box(vm_data x, vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data unbox(vm_data x);
+void setbox(vm_data box, vm_data x);
+int is_list(vm_data data);
+void write_vm_list(vm_data data, int d);
+void write_vm_data(vm_data data);
+void dump_stack_serial(vm_code code);
+void dump_stack(int max);
+void shift_args(int n, int m, int s);
+int restore_stack(vm_data x);
+void insert_continuation_code(vm_data *reg_a, vm_data *reg_c, int reg_s);
+vm_data vm_div(int argp, int f);
+vm_data vm_minus(int argp, int f);
+vm_data vm_mul(int argp, int f);
+vm_data vm_plus(int argp, int f);
+vm_data vm_modulo(int argp, int f);
+void dump_code(int max);
 void dump_code(int max);
 void write_vm_data(vm_data data);
 void dump_stack(int max);
 vm_data exec_code();
+void init_code();
+void ht_init(struct hashtable *table);
+void dump_info();
 
 vm_data ht_insert(struct hashtable *table, const char *key, vm_data data);
 vm_data ht_find(const struct hashtable *table, const char *key);
@@ -185,7 +219,13 @@ void ht_dump(const struct hashtable *table);
 struct hashtable* ht_create();
 void ht_destory(struct hashtable *table);
 
+/* gc.c */
+int is_pointer_to_heap(struct vm_obj *forwarding);
+void copy_data(struct vm_obj *to_adr, struct vm_obj *from_adr, int size);
+struct vm_obj *copy(struct vm_obj *obj);
+void copying(vm_data *reg_a, vm_data *reg_c, int reg_s);
 void gc_init();
+void gc_dump();
 vm_data gc_alloc_closure(int n, int bodyadr, int ebodyadr,
 		vm_data *reg_a, vm_data *reg_c, int reg_s);
 vm_data gc_alloc_string(char *str,
@@ -195,6 +235,7 @@ vm_data gc_alloc_symbol(char *symbol,
 vm_data gc_alloc_stack(vm_data *reg_a, vm_data *reg_c, int reg_s);
 vm_data gc_alloc_pair(vm_data car, vm_data cdr,
 		vm_data *reg_a, vm_data *reg_c, int reg_s);
+struct vm_obj *myalloc(size_t s, vm_data *reg_a, vm_data *reg_c, int reg_s);
 
 /***************************************************
  * external variable definition

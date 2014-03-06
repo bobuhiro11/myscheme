@@ -32,6 +32,7 @@ myalloc(size_t s, vm_data *reg_a, vm_data *reg_c, int reg_s)
 	/* alignment */
 	int p = sizeof(struct vm_obj);
 	size = ((s+p-1) / p ) * p;
+	// printf("size=%d\n",size);
 
 	/* GC */
 	if(from_free + size > from_start + POOL_MAX){
@@ -56,7 +57,7 @@ myalloc(size_t s, vm_data *reg_a, vm_data *reg_c, int reg_s)
  * return true if already copied
  */
 int
-is_pointer_to_heap(struct obj *forwarding)
+is_pointer_to_heap(struct vm_obj *forwarding)
 {
 	if(to_start <= forwarding && forwarding <= (char*)to_start + POOL_MAX){
 		return 1;
@@ -66,7 +67,7 @@ is_pointer_to_heap(struct obj *forwarding)
 }
 
 void
-copy_data(struct obj *to_adr, struct obj *from_adr, int size)
+copy_data(struct vm_obj *to_adr, struct vm_obj *from_adr, int size)
 {
 	int i;
 
@@ -91,7 +92,8 @@ void
 copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
 	struct vm_obj *scan;
-	int i;
+	vm_data *closure;
+	int i, n;
 
 	scan = to_free = to_start;
 
@@ -139,6 +141,18 @@ copying(vm_data *reg_a, vm_data *reg_c, int reg_s)
 			if(IS_OBJ((vm_data)scan->u.pair.cdr)){
 				scan->u.pair.cdr = (vm_data)copy(scan->u.pair.cdr - 3) | 3;
 			}
+		}else if(scan->tag == VM_OBJ_CLOSURE){
+			n = scan->u.closure.size;
+			closure = (char*)scan + sizeof(struct vm_obj);
+			for(i=2;i<n;i++){
+				if(IS_OBJ(closure[i])){
+					closure[i] = (vm_data)copy(closure[i]-3) | 3;
+				}
+			}
+		}else if(scan->tag == VM_OBJ_BOX){
+			if(IS_OBJ(scan->u.box)){
+				scan->u.box = (vm_data)copy(scan->u.box -3 ) | 3;
+			}
 		}
 
 		scan = (char*)scan + scan->size;
@@ -182,8 +196,10 @@ gc_alloc_closure(int n, int bodyadr, int ebodyadr, vm_data *reg_a, vm_data *reg_
 	int size;
 
 	size = sizeof(struct vm_obj) + sizeof(vm_data) * (n+2);
+	//printf("size = %d\n",size);
 	obj = myalloc(size, reg_a, reg_c, reg_s);
-	obj->tag 	   = VM_OBJ_CLOSURE;
+	obj->tag 	    = VM_OBJ_CLOSURE;
+	obj->u.closure.size  = n+2;
 	//closure     = (char*)obj + sizeof(struct vm_obj);
 	//closure[0]  = bodyadr << 2;
 	//closure[1]  = ebodyadr << 2;

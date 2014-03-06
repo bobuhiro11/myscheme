@@ -24,6 +24,22 @@ int heap_last_address;
 int host_bit;
 
 /*
+ * push object to stack
+ *
+ * return stack pointer
+ */
+int
+push(int s, vm_data d)
+{
+	if(s >= STACK_MAX){
+		fprintf(stderr, "Error: stack over flaw.\n");
+		exit(1);
+	}
+	stack[s] = d;
+	return s+1;
+}
+
+/*
  * translate code(string) to code(vm_code)
  */
 vm_code
@@ -97,7 +113,7 @@ get_code()
 	char row[256];
 	int i;
 	vm_code c;
-	char s[256];
+	char s[256] = {0};
 
 	printf(">>");
 	fflush(stdout);
@@ -277,18 +293,22 @@ assign_global(const char *s,vm_data data)
 }
 
 vm_data
-box(vm_data x)
+box(vm_data x, vm_data *reg_a, vm_data *reg_c, int reg_s)
 {
-	vm_data *p = malloc(sizeof(vm_data));
-	*p = x;
-	return ((vm_data)p) | 2;
+	// vm_data *p = malloc(sizeof(vm_data));
+	// *p = x;
+	// return ((vm_data)p) | 2;
+	struct vm_obj *p = myalloc(sizeof(struct vm_obj), reg_a, reg_c, reg_s);
+	p->tag = VM_OBJ_BOX;
+	p->u.box = x;
+	return ((vm_data)p) | 3;
 }
 
 vm_data
 unbox(vm_data x)
 {
 	if(IS_BOX(x)){
-		return *((vm_data*)(x-2));
+		return ((struct vm_obj*)(x-3))->u.box;
 	}else{
 		fprintf(stderr, "Error: this is not box %018p in unbox.\n",x);
 		return VM_DATA_UNDEFINED;
@@ -300,7 +320,8 @@ setbox(vm_data box, vm_data x)
 {
 	if(!IS_BOX(box))
 		fprintf(stderr, "Error: this is not box %018p in setbox.\n",x);
-	*((vm_data*)(box-2)) = x;
+	//*((vm_data*)(box-2)) = x;
+	((struct vm_obj*)(box-3))->u.box = x;
 }
 
 int
@@ -575,7 +596,7 @@ exec_code()
 				break;
 			case CODE_BOX:
 				tmp  = code[pc++] >> 2;	/* n		*/
-				SET_INDEX(s, tmp, box( INDEX(s, tmp)));
+				SET_INDEX(s, tmp, box( INDEX(s, tmp), &a, &c, s));
 				break;
 			case CODE_TEST:
 				tmp  = code[pc++] >> 2;	/* else adr	*/
@@ -661,14 +682,14 @@ exec_code()
 				s = f = restore_stack(tmp);
 				break;
 			case CODE_FRAME:
-				s = PUSH(s, VM_DATA_END_OF_FRAME);
-				s = PUSH(s, code[pc++]);
-				s = PUSH(s, c);
-				s = PUSH(s, argp << 2);
-				s = PUSH(s, f << 2);
+				s = push(s, VM_DATA_END_OF_FRAME);
+				s = push(s, code[pc++]);
+				s = push(s, c);
+				s = push(s, argp << 2);
+				s = push(s, f << 2);
 				break;
 			case CODE_ARGUMENT:
-				s = PUSH(s, a);
+				s = push(s, a);
 				break;
 			case CODE_SHIFT:
 				tmp  = code[pc++]>>2;	/* n	*/

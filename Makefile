@@ -1,5 +1,6 @@
 CC  			:= gcc
-CFLAGS     		:= -g -w
+#CFLAGS     		:= -g -w
+CFLAGS     		:= -g
 TARGET			:= vm/myscmvm
 TARGET_GC		:= vm/myscmvm_gc
 COMPILER		:= compiler/main.scm
