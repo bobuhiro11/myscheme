@@ -384,7 +384,7 @@ write_vm_data(vm_data data)
 			dump_address(data);
 			printf(" ;Bad data");
 		}
-		printf("[%dB]",OBJ_SIZE(data));
+		// printf("[%dB]",OBJ_SIZE(data));
 	}
 }
 
