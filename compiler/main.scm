@@ -30,7 +30,7 @@
       (display (VM '() 0 0 0 '() 0 opecode2))
       (newline))))
 
-;; C言語ようにフォーマットする．
+;; format for C language
 (define linear-compile
   (lambda (code)
     (map (lambda (x)
@@ -48,7 +48,7 @@
         (display "#begin") (newline)
         (linear-compile c)
         (display "#end") (newline)
-        (flush) 
+        (flush)
         (my-repl)))))
 
 (my-repl)

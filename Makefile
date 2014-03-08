@@ -1,13 +1,12 @@
-CC  			:= gcc
-CFLAGS     		:= -g -w
-#CFLAGS     		:= -g
+CC  			  := gcc
+CFLAGS     	:= -g -w
 TARGET			:= vm/myscmvm
 TARGET_GC		:= vm/myscmvm_gc
 COMPILER		:= compiler/main.scm
 
-SOURCES_C     		:= vm/vm.c vm/hashtable.c vm/gc.c
+SOURCES_C  	:= vm/vm.c vm/hashtable.c vm/gc.c
 HEADER			:= vm/common.h
-TESTS			:= $(wildcard test/*.scm)
+TESTS			  := $(wildcard test/*.scm)
 
 $(TARGET): $(SOURCES_C) $(HEADER)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES_C)

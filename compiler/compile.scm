@@ -1,15 +1,15 @@
 ;;; Compilier
 ;;;
-;;; マクロ展開後のschemeコードを，3imp VM用コードへ変換
+;;; compile from code that is expanded macro to 3imp VM bytecode
 
 (add-load-path "." :relative)
 (load "util.scm")
 
-;; 自由変数(グローバル変数を含まない)を検索
+;; find free variable NOT contain global variable
 ;; (find-free
 ;;   '((lambda (x y) z) 10 20)
-;;   '(x y)                         ; 束縛変数
-;;   '(() . (x y z))                ; (ローカル変数リスト . 自由変数リスト)
+;;   '(x y)                         ; bound variable
+;;   '(() . (x y z))                ; (local variable list . free variable list)
 ;;   )
 ;;
 ;;   => (z)
@@ -19,7 +19,7 @@
          (if (and (not (set-member? x b))
                   (or  (set-member? x (car e))
                        (set-member? x (cdr e))))
-           (list x) ; 自由変数は，束縛変数でなく環境のどちらかのリストには含まれている
+           (list x) ; free variable is not bound variable, and contained in "e" list.
            '())]
         [(pair? x)
          (record-case x
@@ -46,9 +46,9 @@
                                        (next (cdr x)))))])]
         [else '()]))
 
-;; set!により束縛される可能性のある変数
+;; find bound varibale by set! instruction
 ;; (find-sets '(lambda (x y) (set! x z))
-;;            '(x y z)) ; 対象の変数
+;;            '(x y z)) ; list for search
 ;;
 ;; => (x)
 (define find-sets
@@ -118,11 +118,11 @@
                     (lambda (n) (list 'refer-free  n next))
                     (lambda (n) (list 'refer-global  n next)))))
 
-;; closure生成時にその自由変数を集める
+;; collect free variable for creating closure object
 ;; (collect-free
-;;   '(x w)                    ; 自由変数のリスト
-;;   '((a b c) . (x y z w))    ; (ローカル変数 . 自由変数)
-;;   '(halt))                  ; 次の命令
+;;   '(x w)                    ; free variable list
+;;   '((a b c) . (x y z w))    ; (local variable . free variable)
+;;   '(halt))                  ; next instruction
 ;;
 ;;   =>
 ;;
@@ -135,7 +135,6 @@
                     e
                     (if (or (set-member? (car vars) (car e))
                             (set-member? (car vars) (cdr e)))
-                      ; このどっちかにはあるはず(なければglobal)
                       (compile-refer (car vars)
                                      e
                                      (list 'argument next))
@@ -169,7 +168,7 @@
       (cons (cons name closure)
             *traditional-macros*))))
 
-; lambda式の複数のbodyに対して
+; for multiple body of lambda expression
 ;
 ; (find-free-bodies
 ;   '((+ x y) 1 (+ z w))
@@ -186,7 +185,7 @@
                             (find-free (car bodies) vars e))))))
 
 
-; lambda式の複数のbodyに対して
+; for multiple body of lambda expression
 ;
 ; (find-sets-bodies
 ;   '((+ x y) (set! x y) (+ z w))
@@ -202,12 +201,12 @@
                             (find-sets (car bodies) vars))))))
 
 (define (compile-lambda e s next vars bodies)
-  (let ([free (find-free-bodies  bodies vars e)] ; lambda式内の自由変数
-        [sets (find-sets-bodies  bodies vars)])  ; lambda式内で，varsのうちset!される可能性のある変数
+  (let ([free (find-free-bodies  bodies vars e)] ; free varibale
+        [sets (find-sets-bodies  bodies vars)])  ; bound variable
     (collect-free free e
                   (list 'close
                         (length free)
-                        ; closure生成時に引数に対してboxを作る
+                        ; create box for parameter of closure
                         (make-boxes sets vars
                                     (recur next ([newe (cons vars free)]
                                                  [news (set-union sets (set-intersect s free))]
@@ -220,10 +219,10 @@
 
 ;; (compile '(if #t 1 2) '(() . ()) '() '(halt))
 ;;
-;; e = (ローカル変数のリスト . 自由変数のリスト)
-;; s = (set!される自由変数のリスト)
+;; e = (local variable list . free variable list)
+;; s = (bound free variable list)
 (define (compile x e s next)
-  (cond 
+  (cond
     [(null? x)
      (list 'constnil x next)]
     [(boolean? x)
@@ -305,8 +304,6 @@
                                                  (list 'shift (length (cdr x)) (cadr next)
                                                        (list 'apply (length (cdr x))))
                                                  (list 'apply (length (cdr x)))))])
-                          ; (list 'shift (length args) (cadr next) (list 'apply (length args)))
-                          ; (list 'apply (length args))))])
                           (if (null? args)
                             (if (tail? next)
                               c

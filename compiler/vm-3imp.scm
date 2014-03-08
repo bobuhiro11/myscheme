@@ -1,7 +1,7 @@
 ;;; Virtual Machine for 3imp format
 ;;;
 ;;;
-;;; Compilierが吐いた3imp VM用コードを実行する
+;;; execute 3imp VM bytecode
 
 (add-load-path "." :relative)
 (load "/util.scm")
@@ -60,7 +60,7 @@
       e
       (find-link (- n 1) (index e -1)))))
 
-;; スタックsの複製を作る
+;; duplicate stack
 (define save-stack
   (lambda (s)
     (let ((v (make-vector s)))
@@ -70,7 +70,7 @@
                (copy (+ i 1))))
       v)))
 
-;; 継続オブジェクトからスタックを復元する
+;; restore stack from stack object saved by continuation
 (define restore-stack
   (lambda (v)
     (let ([s (vector-length v)])
@@ -104,7 +104,7 @@
 (define (set-box! b x)
     (set-cdr! b x))
 
-;; スタックトップのn個をmだけ下にシフトする
+;; shift "n" element of stack top down to "m" block
 (define (shift-args n m s)
   (recur next-arg ([i (- n 1)])
          (unless (< i 0)

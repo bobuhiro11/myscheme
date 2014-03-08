@@ -1,6 +1,6 @@
 ;;; Linear
 ;;;
-;;; Compilierが吐いた3imp VM用コードを線形なフォーマットの言語へ変換
+;;; Compile from 3imp VM bytecode to linear formatted code
 
 (add-load-path "." :relative)
 (load "util.scm")
@@ -136,7 +136,7 @@
                          (list (list adr 'return)
                                (list (+ adr 1) n))])))
 
-;; 3imp->linearの結果を整形・出力
+;; display write result of 3imp->linear
 (define display-linearcode
   (lambda (ccode)
     (if (null? ccode)
