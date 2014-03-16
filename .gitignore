@@ -1,6 +1,7 @@
 *.swp
 a.out
 myscmvm
+myscmvm_gc
 *.dSYM
 *.dSYM/
 sample.*
