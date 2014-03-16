@@ -15,7 +15,7 @@ $(TARGET_GC): $(SOURCES_C) $(HEADER)
 	$(CC) $(CFLAGS) -DGC_MAIN -o $(TARGET_GC) $(SOURCES_C)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(TARGET_GC)
 
 test: $(TARGET) $(TESTS)
 	@for test in $(TESTS) ; do \
